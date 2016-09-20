@@ -105,15 +105,14 @@ message Request {
         PING_REQUEST = 6;
     }
 
-    Header header = 1;
-    RequestType type = 2;
-    RegisterRequest registerRequest = 3;
-    UnRegisterRequest unRegisterRequest = 4;
-    ExistingRequest existingRequest = 5;
-    AcquireRequest acquireRequest = 6;
-    TryAcquireRequest tryAcquireRequest = 7;
-    ReleaseRequest releaseRequest = 8;
-    PingRequest pingRequest = 9;
+    RequestType type = 1;
+    RegisterRequest registerRequest = 2;
+    UnRegisterRequest unRegisterRequest = 3;
+    ExistingRequest existingRequest = 4;
+    AcquireRequest acquireRequest = 5;
+    TryAcquireRequest tryAcquireRequest = 6;
+    ReleaseRequest releaseRequest = 7;
+    PingRequest pingRequest = 8;
 }
 
 message Response {
@@ -127,15 +126,14 @@ message Response {
         PING_RESPONSE = 6;
     }
 
-    Header header = 1;
-    ResponseType type = 2;
-    RegisterResponse registerResponse = 3;
-    UnRegisterResponse unRegisterResponse = 4;
-    ExistingResponse existingResponse = 5;
-    AcquireResponse acquireResponse = 6;
-    TryAcquireResponse tryAcquireResponse = 7;
-    ReleaseResponse releaseResponse = 8;
-    PingResponse pingResponse = 9;
+    ResponseType type = 1;
+    RegisterResponse registerResponse = 2;
+    UnRegisterResponse unRegisterResponse = 3;
+    ExistingResponse existingResponse = 4;
+    AcquireResponse acquireResponse = 5;
+    TryAcquireResponse tryAcquireResponse = 6;
+    ReleaseResponse releaseResponse = 7;
+    PingResponse pingResponse = 8;
 }
 
 message Header {
