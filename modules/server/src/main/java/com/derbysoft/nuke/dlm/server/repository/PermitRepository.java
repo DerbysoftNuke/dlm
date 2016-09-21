@@ -75,19 +75,4 @@ public class PermitRepository implements IPermitRepository {
         return ImmutableMap.copyOf(permits);
     }
 
-    public static void main(String... a) {
-        DB db = DBMaker.fileDB("/tmp/test.db")
-                .fileChannelEnable()
-                .fileMmapEnableIfSupported()
-                .fileMmapPreclearDisable()
-                .transactionEnable()
-                .closeOnJvmShutdown()
-                .make();
-        HTreeMap<String, IPermit> map = db.hashMap("test", Serializer.STRING, new PermitSerializer()).createOrOpen();
-        System.out.println(map.get("1"));
-        map.putIfAbsent("1", new TokenBucketPermit(2d));
-        System.out.println(map.get("1"));
-        db.commit();
-    }
-
 }
