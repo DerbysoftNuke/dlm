@@ -70,7 +70,7 @@ class TcpPermitTest {
     @Test
     def void performance() {
         def tasks = [];
-        def total = 1000;
+        def total = 10000;
         AtomicInteger a = new AtomicInteger(total);
         (1..total).each {
             tasks.add({

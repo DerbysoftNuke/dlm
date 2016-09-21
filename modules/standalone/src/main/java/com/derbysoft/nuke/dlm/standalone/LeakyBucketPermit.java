@@ -20,6 +20,7 @@ public class LeakyBucketPermit extends StandalonePermit {
     private static final long serialVersionUID = -3222578781660680211L;
 
     private final RateLimiter rateLimiter;
+    private final double permitsPerSecond;
 
     /**
      * Creates a {@code RateLimiterPermit} with the specified stable throughput,
@@ -43,6 +44,7 @@ public class LeakyBucketPermit extends StandalonePermit {
      */
     public LeakyBucketPermit(double permitsPerSecond) {
         rateLimiter = RateLimiter.create(permitsPerSecond, 1L, TimeUnit.MICROSECONDS);
+        this.permitsPerSecond = permitsPerSecond;
     }
 
     @Override
@@ -65,13 +67,15 @@ public class LeakyBucketPermit extends StandalonePermit {
     }
 
     @Override
+    public String spec() {
+        return "permitsPerSecond=" + permitsPerSecond;
+    }
+
+    @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("stableRate", String.format(Locale.ROOT, "%3.1fqps", rateLimiter.getRate()))
                 .toString() + "@" + Integer.toHexString(hashCode());
     }
 
-    public static void main(String... a) throws UnsupportedEncodingException {
-        System.out.print(URLEncoder.encode("=","UTF-8"));
-    }
 }

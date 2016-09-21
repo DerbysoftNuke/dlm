@@ -45,6 +45,11 @@ public class ReentrantPermit extends StandalonePermit {
     }
 
     @Override
+    public String spec() {
+        return "";
+    }
+
+    @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .toString();

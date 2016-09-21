@@ -4,7 +4,8 @@ import com.derbysoft.nuke.dlm.server.PermitManager;
 import com.derbysoft.nuke.dlm.server.codec.Http2PermitRequestDecoder;
 import com.derbysoft.nuke.dlm.server.codec.PermitResponse2HttpEncoder;
 import com.derbysoft.nuke.dlm.server.handler.PermitServerHandler;
-import com.derbysoft.nuke.dlm.server.status.HttpMonitorHandler;
+import com.derbysoft.nuke.dlm.server.status.StatsCenter;
+import com.derbysoft.nuke.dlm.server.status.TrafficMonitorHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
@@ -37,7 +38,7 @@ public class PermitServerHttpInitializer extends PermitServerInitializer {
     protected void beforeInitChannel(SocketChannel socketChannel) throws Exception {
         socketChannel.pipeline()
                 .addLast("logger", new LoggingHandler(LogLevel.DEBUG))
-                .addLast("monitorHandler", new HttpMonitorHandler())
+                .addLast("monitorHandler", new TrafficMonitorHandler(StatsCenter.getInstance().getHttpStats()))
                 .addLast("http-decoder", new HttpRequestDecoder())
                 .addLast("http-encoder", new HttpResponseEncoder())
                 .addLast("http-aggregator", new HttpObjectAggregator(65536))

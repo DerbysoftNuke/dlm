@@ -6,6 +6,8 @@ import com.derbysoft.nuke.dlm.PermitService;
 import com.derbysoft.nuke.dlm.server.initializer.PermitServerInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -19,7 +21,7 @@ import java.util.Map;
  * Created by passyt on 16-9-4.
  */
 @Configuration
-@ComponentScan
+@ComponentScan("com.derbysoft.nuke.dlm.server")
 public class PermitServerConfiguration {
 
     @Bean(name = "bossGroup")
@@ -35,6 +37,17 @@ public class PermitServerConfiguration {
     @Bean(name = "permitService")
     public IPermitService permitService(IPermitManager permitManager) {
         return new PermitService(permitManager);
+    }
+
+    @Bean(name = "db")
+    public DB db(@Value("${db.path}") String dbPath) {
+        return DBMaker.fileDB(dbPath)
+                .fileChannelEnable()
+                .fileMmapEnableIfSupported()
+                .fileMmapPreclearDisable()
+                .transactionEnable()
+                .closeOnJvmShutdown()
+                .make();
     }
 
     @Bean(name = "permServerInitializers")

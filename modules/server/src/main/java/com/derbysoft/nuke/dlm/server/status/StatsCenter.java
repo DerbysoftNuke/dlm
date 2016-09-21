@@ -1,10 +1,19 @@
 package com.derbysoft.nuke.dlm.server.status;
 
+import com.derbysoft.nuke.dlm.IPermit;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import io.netty.channel.Channel;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by passyt on 16-9-19.
@@ -13,10 +22,9 @@ public class StatsCenter {
 
     private static final StatsCenter INSTANCE = new StatsCenter();
 
-    private final DefaultStats tcpTrafficStats = new DefaultStats();
-    private final DefaultStats httpTrafficStats = new DefaultStats();
-    private final Set<Channel> tcpChannels = new CopyOnWriteArraySet<>();
-    private final Set<Channel> httpChannels = new CopyOnWriteArraySet<>();
+    private final TrafficStats tcpStats = new TrafficStats();
+    private final TrafficStats httpStats = new TrafficStats();
+    private final ConcurrentMap<String, PermitStats> permitStats = new ConcurrentHashMap<>();
 
     private StatsCenter() {
     }
@@ -25,39 +33,167 @@ public class StatsCenter {
         return INSTANCE;
     }
 
-    public DefaultStats getTcpTrafficStats() {
-        return tcpTrafficStats;
+    public TrafficStats getHttpStats() {
+        return httpStats;
     }
 
-    public DefaultStats getHttpTrafficStats() {
-        return httpTrafficStats;
+    public TrafficStats getTcpStats() {
+        return tcpStats;
     }
 
-    public Set<Channel> getHttpChannels() {
-        return Collections.unmodifiableSet(httpChannels);
+    public Stats register(String resourceId, IPermit permit) {
+        permitStats.putIfAbsent(resourceId, new PermitStats(permit));
+        return permitStats.get(resourceId);
     }
 
-    public Set<Channel> getTcpChannels() {
-        return Collections.unmodifiableSet(tcpChannels);
+    public Map<String, PermitStats> permitStats() {
+        return Collections.unmodifiableMap(permitStats);
     }
 
-    public StatsCenter activeTcp(Channel channel){
-        tcpChannels.add(channel);
-        return this;
+    public PermitStats getPermitStats(String resourceId) {
+        return permitStats.get(resourceId);
     }
 
-    public StatsCenter inactiveTcp(Channel channel){
-        tcpChannels.remove(channel);
-        return this;
+    public static class TrafficStats {
+
+        private final Stats traffic = new Stats();
+        private final Set<Channel> channels = new CopyOnWriteArraySet<>();
+
+        public Stats getTraffic() {
+            return traffic;
+        }
+
+        public Set<Channel> getChannels() {
+            return Collections.unmodifiableSet(channels);
+        }
+
+        public TrafficStats active(Channel channel) {
+            channels.add(channel);
+            return this;
+        }
+
+        public TrafficStats inactive(Channel channel) {
+            channels.remove(channel);
+            return this;
+        }
+
     }
 
-    public StatsCenter activeHttp(Channel channel){
-        httpChannels.add(channel);
-        return this;
+    public static class PermitStats extends Stats {
+
+        private final IPermit permit;
+
+        public PermitStats(IPermit permit) {
+            this.permit = permit;
+        }
+
+        public IPermit getPermit() {
+            return permit;
+        }
     }
 
-    public StatsCenter inactiveHttp(Channel channel){
-        httpChannels.remove(channel);
-        return this;
+    public static class Stats {
+
+        private Peak peak = new Peak();
+        private AtomicLong actives = new AtomicLong(0);
+        private ZonedDateTime lastTimestamp;
+
+        public Stats increment() {
+            lastTimestamp = ZonedDateTime.now();
+            long total = actives.incrementAndGet();
+            if (total >= peak.getCount().get()) {
+                peak.getCount().set(total);
+                peak.timestamp.set(ZonedDateTime.now());
+            }
+            return this;
+        }
+
+        public Stats decrement() {
+            actives.decrementAndGet();
+            return this;
+        }
+
+        public Peak getPeak() {
+            return peak;
+        }
+
+        public AtomicLong getActives() {
+            return actives;
+        }
+
+        public ZonedDateTime getLastTimestamp() {
+            return lastTimestamp;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Stats)) return false;
+            Stats stats = (Stats) o;
+            return Objects.equal(peak, stats.peak) &&
+                    Objects.equal(actives, stats.actives) &&
+                    Objects.equal(lastTimestamp, stats.lastTimestamp);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(peak, actives, lastTimestamp);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("peak", peak)
+                    .add("actives", actives)
+                    .add("lastTimestamp", lastTimestamp)
+                    .toString();
+        }
+
+    }
+
+    public static class Peak {
+
+        private final AtomicLong count;
+        private final AtomicReference<ZonedDateTime> timestamp;
+
+        public Peak() {
+            count = new AtomicLong(0);
+            timestamp = new AtomicReference(ZonedDateTime.now());
+        }
+
+        public AtomicLong getCount() {
+            return count;
+        }
+
+        public AtomicReference<ZonedDateTime> getTimestamp() {
+            return timestamp;
+        }
+
+        public Peak increment() {
+            count.incrementAndGet();
+            return this;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Peak)) return false;
+            Peak peak = (Peak) o;
+            return Objects.equal(count, peak.count) &&
+                    Objects.equal(timestamp, peak.timestamp);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(count, timestamp);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("count", count)
+                    .add("timestamp", timestamp)
+                    .toString();
+        }
     }
 }

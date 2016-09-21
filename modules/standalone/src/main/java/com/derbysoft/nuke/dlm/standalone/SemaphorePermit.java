@@ -63,6 +63,11 @@ public class SemaphorePermit extends StandalonePermit {
     }
 
     @Override
+    public String spec() {
+        return "total=" + total;
+    }
+
+    @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("availablePermits", semaphore.availablePermits())

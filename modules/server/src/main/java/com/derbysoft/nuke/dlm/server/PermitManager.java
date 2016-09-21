@@ -4,18 +4,18 @@ import com.derbysoft.nuke.dlm.IPermit;
 import com.derbysoft.nuke.dlm.IPermitManager;
 import com.derbysoft.nuke.dlm.PermitBuilderManager;
 import com.derbysoft.nuke.dlm.PermitSpec;
-import com.derbysoft.nuke.dlm.server.status.DefaultStats;
-import com.derbysoft.nuke.dlm.standalone.StandalonePermit;
+import com.derbysoft.nuke.dlm.server.repository.IPermitRepository;
+import com.derbysoft.nuke.dlm.server.status.StatsCenter;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by passyt on 16-9-2.
@@ -24,63 +24,14 @@ import java.util.concurrent.TimeUnit;
 public class PermitManager implements IPermitManager {
 
     private Logger log = LoggerFactory.getLogger(PermitManager.class);
-    private static ConcurrentMap<String, StatPermit> permits = new ConcurrentHashMap<>();
-    private static final String filePath = System.getProperty("java.io.tmpdir");
-    private ConcurrentMap<String, IPermit> updatePermits = new ConcurrentHashMap<>();
 
-    static {
-        StandalonePermit.init();
-        loadPermits();
-    }
+    private final IPermitRepository repository;
 
-    private static void loadPermits() {
-        try {
-            ConcurrentMap<String, StatPermit> each = (ConcurrentMap<String, StatPermit>) new ObjectInputStream(new FileInputStream(createFile())).readObject();
-            for (Map.Entry<String, StatPermit> entry : each.entrySet()) {
-                permits.put(entry.getKey(), entry.getValue());
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    private static File createFile() {
-        try {
-            File file = new File(filePath + "permits.json");
-            if (!file.exists()) {
-                file.createNewFile();
-                ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file));
-                outputStream.writeObject(new ConcurrentHashMap<>());
-                outputStream.close();
-            }
-            return file;
-        } catch (IOException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    public void saveOrUpdatePermists(ConcurrentMap<String, StatPermit> newPermits, String... resourceIds) {
-        updatePermits.clear();
-        try {
-            File file = createFile();
-            Map<String, StatPermit> each = (Map<String, StatPermit>) new ObjectInputStream(new FileInputStream(file)).readObject();
-            if (resourceIds.length > 0) {
-                for (String resourceId : resourceIds) {
-                    each.remove(resourceId);
-                }
-            } else {
-                for (Map.Entry<String, StatPermit> entry : newPermits.entrySet()) {
-                    updatePermits.put(entry.getKey(), entry.getValue());
-                }
-            }
-            for (Map.Entry<String, StatPermit> entry : each.entrySet()) {
-                updatePermits.put(entry.getKey(), entry.getValue());
-            }
-            ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file));
-            outputStream.writeObject(updatePermits);
-            outputStream.close();
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+    @Autowired
+    public PermitManager(IPermitRepository repository) {
+        this.repository = repository;
+        for (Map.Entry<String, IPermit> each : repository.getAll().entrySet()) {
+            register(each.getKey(), each.getValue().name(), new PermitSpec(each.getValue().spec()));
         }
     }
 
@@ -88,95 +39,60 @@ public class PermitManager implements IPermitManager {
     public boolean register(String resourceId, String permitName, PermitSpec spec) {
         log.debug("Register permit {} with spec {} by id {}", permitName, spec, resourceId);
 
-        if (permits.putIfAbsent(resourceId, buildPermit(permitName, spec)) != null) {
-            log.warn("An existing permit {} with id {}, not allow to register", permits.get(resourceId), resourceId);
+        IPermit permit = buildPermit(permitName, spec);
+        StatsCenter.getInstance().register(resourceId, permit);
+
+        if (repository.putIfAbsent(resourceId, permit) != null) {
+            log.warn("An existing permit {} with id {}, not allow to register", repository.get(resourceId), resourceId);
             return false;
         }
-        saveOrUpdatePermists(permits);
         return true;
     }
 
     @Override
     public boolean unregister(String resourceId) {
-        permits.remove(resourceId);
-        saveOrUpdatePermists(permits, resourceId);
+        repository.remove(resourceId);
         return true;
     }
 
     @Override
     public boolean isExisting(String resourceId) {
-        return permits.containsKey(resourceId);
+        return repository.contains(resourceId);
     }
 
     @Override
     public IPermit getPermit(String resourceId) {
-        return permits.get(resourceId);
+        IPermit permit = repository.get(resourceId);
+        return (IPermit) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{IPermit.class}, new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                Object result = method.invoke(permit, args);
+                if ("acquire".equals(method.getName())) {
+                    StatsCenter.getInstance().getPermitStats(resourceId).increment();
+                } else if ("tryAcquire".equals(method.getName())) {
+                    if (Boolean.TRUE.equals(result)) {
+                        StatsCenter.getInstance().getPermitStats(resourceId).increment();
+                    }
+                } else if ("release".equals(method.getName())) {
+                    StatsCenter.getInstance().getPermitStats(resourceId).decrement();
+                }
+                return result;
+            }
+        });
+
     }
 
-    public Map<String, StatPermit> permits() {
-        return ImmutableMap.copyOf(this.permits);
+    public Map<String, IPermit> permits() {
+        return ImmutableMap.copyOf(repository.getAll());
     }
 
-    protected StatPermit buildPermit(String permitName, PermitSpec spec) {
+    protected IPermit buildPermit(String permitName, PermitSpec spec) {
         IPermit permit = PermitBuilderManager.getInstance().buildPermit(permitName, spec);
         if (permit == null) {
-            throw new IllegalArgumentException("Permit not found by permit " + permitName + " with spec " + spec);
+            throw new IllegalArgumentException("PermitSerializer not found by permit " + permitName + " with spec " + spec);
         }
 
-        return new StatPermit(permit);
-    }
-
-    public static class StatPermit implements IPermit {
-
-        private static final long serialVersionUID = -3222578541660680211L;
-
-        private final IPermit permit;
-        private final DefaultStats stats;
-
-        public StatPermit(IPermit permit) {
-            this.permit = permit;
-            this.stats = new DefaultStats();
-        }
-
-        @Override
-        public void acquire() {
-            permit.acquire();
-            stats.increment();
-        }
-
-        @Override
-        public boolean tryAcquire() {
-            if (permit.tryAcquire()) {
-                stats.increment();
-                return true;
-            }
-
-            return false;
-        }
-
-        @Override
-        public boolean tryAcquire(long timeout, TimeUnit unit) {
-            if (permit.tryAcquire(timeout, unit)) {
-                stats.increment();
-                return true;
-            }
-
-            return false;
-        }
-
-        @Override
-        public void release() {
-            permit.release();
-            stats.decrement();
-        }
-
-        public DefaultStats getStats() {
-            return stats;
-        }
-
-        public IPermit getPermit() {
-            return permit;
-        }
+        return permit;
     }
 
 }

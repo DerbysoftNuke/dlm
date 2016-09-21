@@ -19,6 +19,7 @@ public class TokenBucketPermit extends StandalonePermit {
 
     private static final long serialVersionUID = -3222578661666580211L;
     private final RateLimiter rateLimiter;
+    private final double permitsPerSecond;
 
     /**
      * Creates a {@code RateLimiterPermit} with the specified stable throughput,
@@ -42,6 +43,7 @@ public class TokenBucketPermit extends StandalonePermit {
      */
     public TokenBucketPermit(double permitsPerSecond) {
         rateLimiter = RateLimiter.create(permitsPerSecond);
+        this.permitsPerSecond = permitsPerSecond;
     }
 
     @Override
@@ -61,6 +63,11 @@ public class TokenBucketPermit extends StandalonePermit {
 
     @Override
     public void release() {
+    }
+
+    @Override
+    public String spec() {
+        return "permitsPerSecond=" + permitsPerSecond;
     }
 
     @Override

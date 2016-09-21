@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -49,11 +51,14 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
             try {
                 response = permitService.execute(request);
             } catch (Exception e) {
+                StringWriter writer = new StringWriter();
+                e.printStackTrace(new PrintWriter(writer));
+
                 log.error("Catch exception by request [" + request + "]", e);
                 response = request.newResponse();
                 response.setResourceId(request.getResourceId());
                 response.setHeader(request.getHeader());
-                response.setErrorMessage(e.getMessage());
+                response.setErrorMessage(writer.toString());
             }
             streamLog.info("Return response >>| {} to {}", response, ctx.channel().remoteAddress().toString());
             ctx.writeAndFlush(response);

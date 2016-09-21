@@ -1,10 +1,11 @@
 package com.derbysoft.nuke.dlm.server.codec;
 
+import com.derbysoft.nuke.dlm.IPermit;
 import com.derbysoft.nuke.dlm.model.*;
 import com.derbysoft.nuke.dlm.server.PermitManager;
-import com.derbysoft.nuke.dlm.server.status.DefaultStats;
 import com.derbysoft.nuke.dlm.server.status.StatsCenter;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -124,12 +125,6 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
     protected void help(ChannelHandlerContext ctx) throws UnsupportedEncodingException {
         StringBuilder content = new StringBuilder();
         content.append(HELP_MESSAGE);
-        content.append("Status:\n");
-        content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-        for (Map.Entry<String, PermitManager.StatPermit> entry : manager.permits().entrySet()) {
-            content.append("<tr>").append("<td>").append(entry.getKey()).append("</td>").append("<td>").append(entry.getValue().getPermit()).append("</td>").append("</tr>");
-        }
-        content.append("</table>\n");
 
         DefaultFullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content.toString().getBytes("UTF-8")));
         httpResponse.headers().add("Content-Type", "text/html; charset=utf-8");
@@ -139,85 +134,49 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
 
     protected void status(ChannelHandlerContext ctx) throws UnsupportedEncodingException {
         StringBuilder content = new StringBuilder();
-        DefaultStats trafficStats = StatsCenter.getInstance().getTcpTrafficStats();
-        Set<Channel> channels = StatsCenter.getInstance().getTcpChannels();
-        content.append("<h2>TCP Traffic Status</h2>\n");
-        content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-        content.append("<tr>")
-                .append("<th>").append("Peak Connections").append("</th>")
-                .append("<th>").append("Peak Timestamp").append("</th>")
-                .append("<th>").append("Current Active Connections").append("</th>")
-                .append("<th>").append("Last Access Timestamp").append("</th>")
-                .append("</tr>");
-        content.append("<tr>")
-                .append("<td>").append(trafficStats.getPeak().getCount()).append("</td>")
-                .append("<td>").append(trafficStats.getPeak().getTimestamp()).append("</td>")
-                .append("<td>").append(trafficStats.getActives()).append("</td>")
-                .append("<td>").append(trafficStats.getLastTimestamp()).append("</td>")
-                .append("</tr>");
-        content.append("</table>\n");
+        Map<String, StatsCenter.TrafficStats> map = ImmutableMap.of("HTTP", StatsCenter.getInstance().getHttpStats(), "TCP", StatsCenter.getInstance().getTcpStats());
+        for (Map.Entry<String, StatsCenter.TrafficStats> each : map.entrySet()) {
+            String type = each.getKey();
+            StatsCenter.TrafficStats trafficStats = each.getValue();
 
-        content.append("<h4>Active Connections</h4>\n");
-        content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-        content.append("<tr>")
-                .append("<th>").append("Id").append("</th>")
-                .append("<th>").append("Local Address").append("</th>")
-                .append("<th>").append("Remote Address").append("</th>")
-                .append("<th>").append("Active").append("</th>")
-                .append("<th>").append("Open").append("</th>")
-                .append("<th>").append("Connect Timeout").append("</th>")
-                .append("</tr>");
-        for (Channel channel : channels) {
+            content.append("<h2>").append(type).append(" Traffic Status</h2>\n");
+            content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
             content.append("<tr>")
-                    .append("<td>").append(channel.id()).append("</td>")
-                    .append("<td>").append(channel.localAddress()).append("</td>")
-                    .append("<td>").append(channel.remoteAddress()).append("</td>")
-                    .append("<td>").append(channel.isActive()).append("</td>")
-                    .append("<td>").append(channel.isOpen()).append("</td>")
-                    .append("<td>").append(channel.config().getConnectTimeoutMillis()).append("</td>")
+                    .append("<th>").append("Peak Connections").append("</th>")
+                    .append("<th>").append("Peak Timestamp").append("</th>")
+                    .append("<th>").append("Current Active Connections").append("</th>")
+                    .append("<th>").append("Last Access Timestamp").append("</th>")
                     .append("</tr>");
-        }
-        content.append("</table>\n");
-
-        trafficStats = StatsCenter.getInstance().getHttpTrafficStats();
-        channels = StatsCenter.getInstance().getHttpChannels();
-        content.append("<h2>HTTP Traffic Status</h2>\n");
-        content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-        content.append("<tr>")
-                .append("<th>").append("Peak Connections").append("</th>")
-                .append("<th>").append("Peak Timestamp").append("</th>")
-                .append("<th>").append("Current Active Connections").append("</th>")
-                .append("<th>").append("Last Access Timestamp").append("</th>")
-                .append("</tr>");
-        content.append("<tr>")
-                .append("<td>").append(trafficStats.getPeak().getCount()).append("</td>")
-                .append("<td>").append(trafficStats.getPeak().getTimestamp()).append("</td>")
-                .append("<td>").append(trafficStats.getActives()).append("</td>")
-                .append("<td>").append(trafficStats.getLastTimestamp()).append("</td>")
-                .append("</tr>");
-        content.append("</table>\n");
-
-        content.append("<h4>Active Connections</h4>\n");
-        content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-        content.append("<tr>")
-                .append("<th>").append("Id").append("</th>")
-                .append("<th>").append("Local Address").append("</th>")
-                .append("<th>").append("Remote Address").append("</th>")
-                .append("<th>").append("Active").append("</th>")
-                .append("<th>").append("Open").append("</th>")
-                .append("<th>").append("Connect Timeout").append("</th>")
-                .append("</tr>");
-        for (Channel channel : channels) {
             content.append("<tr>")
-                    .append("<td>").append(channel.id()).append("</td>")
-                    .append("<td>").append(channel.localAddress()).append("</td>")
-                    .append("<td>").append(channel.remoteAddress()).append("</td>")
-                    .append("<td>").append(channel.isActive()).append("</td>")
-                    .append("<td>").append(channel.isOpen()).append("</td>")
-                    .append("<td>").append(channel.config().getConnectTimeoutMillis()).append("</td>")
+                    .append("<td>").append(trafficStats.getTraffic().getPeak().getCount()).append("</td>")
+                    .append("<td>").append(trafficStats.getTraffic().getPeak().getTimestamp()).append("</td>")
+                    .append("<td>").append(trafficStats.getTraffic().getActives()).append("</td>")
+                    .append("<td>").append(trafficStats.getTraffic().getLastTimestamp()).append("</td>")
                     .append("</tr>");
+            content.append("</table>\n");
+
+            content.append("<h4>Active Connections</h4>\n");
+            content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
+            content.append("<tr>")
+                    .append("<th>").append("Id").append("</th>")
+                    .append("<th>").append("Local Address").append("</th>")
+                    .append("<th>").append("Remote Address").append("</th>")
+                    .append("<th>").append("Active").append("</th>")
+                    .append("<th>").append("Open").append("</th>")
+                    .append("<th>").append("Connect Timeout").append("</th>")
+                    .append("</tr>");
+            for (Channel channel : trafficStats.getChannels()) {
+                content.append("<tr>")
+                        .append("<td>").append(channel.id()).append("</td>")
+                        .append("<td>").append(channel.localAddress()).append("</td>")
+                        .append("<td>").append(channel.remoteAddress()).append("</td>")
+                        .append("<td>").append(channel.isActive()).append("</td>")
+                        .append("<td>").append(channel.isOpen()).append("</td>")
+                        .append("<td>").append(channel.config().getConnectTimeoutMillis()).append("</td>")
+                        .append("</tr>");
+            }
+            content.append("</table>\n");
         }
-        content.append("</table>\n");
 
         content.append("<h2>Permit Status</h2>\n");
         content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
@@ -229,14 +188,15 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
                 .append("<th>").append("Current Permits").append("</th>")
                 .append("<th>").append("Last Acquire Timestamp").append("</th>")
                 .append("</tr>");
-        for (Map.Entry<String, PermitManager.StatPermit> entry : manager.permits().entrySet()) {
+
+        for (Map.Entry<String, StatsCenter.PermitStats> entry : StatsCenter.getInstance().permitStats().entrySet()) {
             content.append("<tr>")
                     .append("<td>").append(entry.getKey()).append("</td>")
                     .append("<td>").append(entry.getValue().getPermit()).append("</td>")
-                    .append("<td>").append(entry.getValue().getStats().getPeak().getCount()).append("</td>")
-                    .append("<td>").append(entry.getValue().getStats().getPeak().getTimestamp()).append("</td>")
-                    .append("<td>").append(entry.getValue().getStats().getActives()).append("</td>")
-                    .append("<td>").append(entry.getValue().getStats().getLastTimestamp()).append("</td>")
+                    .append("<td>").append(entry.getValue().getPeak().getCount()).append("</td>")
+                    .append("<td>").append(entry.getValue().getPeak().getTimestamp()).append("</td>")
+                    .append("<td>").append(entry.getValue().getActives()).append("</td>")
+                    .append("<td>").append(entry.getValue().getLastTimestamp()).append("</td>")
                     .append("</tr>");
         }
         content.append("</table>\n");

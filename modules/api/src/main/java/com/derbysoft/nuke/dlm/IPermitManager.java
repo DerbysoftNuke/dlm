@@ -1,8 +1,13 @@
 package com.derbysoft.nuke.dlm;
 
+/**
+ *
+ */
 public interface IPermitManager {
 
     /**
+     * register a new permit in register server, return error if an existing permit
+     *
      * @param resourceId the id of resource in register server
      * @param permitName permit name(class name or alias)
      * @param spec       permit spec
@@ -11,7 +16,7 @@ public interface IPermitManager {
     boolean register(String resourceId, String permitName, PermitSpec spec);
 
     /**
-     * @param resourceId the id of permit in register server
+     * @param resourceId the id of resource in register server
      * @return
      */
     boolean unregister(String resourceId);
@@ -23,9 +28,9 @@ public interface IPermitManager {
     boolean isExisting(String resourceId);
 
     /**
-     * @param resourceId the id of permit in register server
+     * @param resourceKey the id of resource in register server
      * @return
      */
-    IPermit getPermit(String resourceId);
+    IPermit getPermit(String resourceKey);
 
 }
