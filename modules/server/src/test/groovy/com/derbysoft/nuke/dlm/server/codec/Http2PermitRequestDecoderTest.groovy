@@ -82,7 +82,6 @@ class Http2PermitRequestDecoderTest extends Specification {
         1 * decoderResult.isSuccess() >> true
         1 * request.headers() >> httpHeaders
         1 * request.uri() >> "/help"
-        1 * manager.permits() >> [:]
         1 * ctx.writeAndFlush(_) >> {
             actualResponse = it[0];
             channelFuture
@@ -100,9 +99,6 @@ class Http2PermitRequestDecoderTest extends Specification {
  <li>/permit/${resourceId}/action/tryacquire/timeout/10/timeunit/seconds</li>
  <li>/permit/${resourceId}/action/release</li>
  </ul>
-Status:
-<table border="1" bordercolor="#ccc" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
-</table>
 '''
 
         def DefaultFullHttpResponse expectedResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content.getBytes("UTF-8")));
