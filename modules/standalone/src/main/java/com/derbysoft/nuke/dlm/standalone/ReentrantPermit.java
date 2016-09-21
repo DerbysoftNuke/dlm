@@ -16,6 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ReentrantPermit extends StandalonePermit {
 
+    private static final long serialVersionUID = -3222378661660680211L;
     private final Lock lock = new ReentrantLock();
 
     @Override

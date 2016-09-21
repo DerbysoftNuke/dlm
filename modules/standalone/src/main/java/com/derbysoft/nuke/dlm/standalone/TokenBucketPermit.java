@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TokenBucketPermit extends StandalonePermit {
 
+    private static final long serialVersionUID = -3222578661666580211L;
     private final RateLimiter rateLimiter;
 
     /**

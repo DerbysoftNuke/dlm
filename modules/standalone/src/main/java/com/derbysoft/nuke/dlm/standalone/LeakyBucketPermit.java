@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class LeakyBucketPermit extends StandalonePermit {
 
+    private static final long serialVersionUID = -3222578781660680211L;
+
     private final RateLimiter rateLimiter;
 
     /**

@@ -3,6 +3,7 @@ package com.derbysoft.nuke.dlm.server.status;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -10,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Created by passyt on 16-9-19.
  */
-public class DefaultStats {
+public class DefaultStats implements Serializable{
 
     private Peak peak = new Peak();
     private AtomicLong actives = new AtomicLong(0);
@@ -67,8 +68,9 @@ public class DefaultStats {
                 .toString();
     }
 
-    public static class Peak {
+    public static class Peak implements Serializable{
 
+        private static final long serialVersionUID = -3222378661660680211L;
         private final AtomicLong count;
         private final AtomicReference<ZonedDateTime> timestamp;
 

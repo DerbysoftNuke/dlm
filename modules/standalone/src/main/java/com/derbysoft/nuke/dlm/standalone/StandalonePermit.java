@@ -8,6 +8,7 @@ import com.derbysoft.nuke.dlm.PermitBuilderManager;
  */
 public abstract class StandalonePermit implements IPermit {
 
+    private static final long serialVersionUID = -3222578661660680811L;
     public static void init() {
         PermitBuilderManager.getInstance().registerPermitBuilder((spec) -> {
             return new LeakyBucketPermit(spec.required(true).doubleValueOf("permitsPerSecond"));

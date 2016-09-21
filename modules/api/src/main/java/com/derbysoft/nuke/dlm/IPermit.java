@@ -1,5 +1,6 @@
 package com.derbysoft.nuke.dlm;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -7,7 +8,7 @@ import java.util.concurrent.TimeUnit;
  * @author Passyt
  *
  */
-public interface IPermit {
+public interface IPermit extends Serializable{
 
 	/**
 	 * Acquires the permit.

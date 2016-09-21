@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class SemaphorePermit extends StandalonePermit {
 
+    private static final long serialVersionUID = -3222578661660680211L;
+
     private final Semaphore semaphore;
     private final int total;
 
