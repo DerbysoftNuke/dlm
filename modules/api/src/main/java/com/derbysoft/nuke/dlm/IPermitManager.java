@@ -1,7 +1,7 @@
 package com.derbysoft.nuke.dlm;
 
 /**
- *
+ * permit manager in server side to manage all permit settings
  */
 public interface IPermitManager {
 
@@ -31,6 +31,7 @@ public interface IPermitManager {
      * @param resourceKey the id of resource in register server
      * @return
      */
+    //TODO support read-write permit, resource permit etc
     IPermit getPermit(String resourceKey);
 
 }

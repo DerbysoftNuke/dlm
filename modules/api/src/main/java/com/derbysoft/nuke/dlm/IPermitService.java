@@ -8,6 +8,10 @@ import com.derbysoft.nuke.dlm.model.IPermitResponse;
  */
 public interface IPermitService<RS extends IPermitResponse, RQ extends IPermitRequest<RS>> {
 
+    /**
+     * @param request
+     * @return
+     */
     RS execute(RQ request);
 
 }

@@ -60,6 +60,7 @@ public interface IPermit {
     /**
      * @return
      */
+    //TODO code refactor
     default String name() {
         return getClass().getSimpleName();
     }
@@ -67,6 +68,7 @@ public interface IPermit {
     /**
      * @return
      */
+    //TODO code refactor
     default String spec() {
         return toString();
     }

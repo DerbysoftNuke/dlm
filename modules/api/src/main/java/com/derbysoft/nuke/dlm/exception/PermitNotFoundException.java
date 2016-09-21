@@ -5,14 +5,14 @@ package com.derbysoft.nuke.dlm.exception;
  */
 public class PermitNotFoundException extends PermitException {
 
-    private String permitId;
+    private String resourceId;
 
-    public PermitNotFoundException(String permitId) {
-        super("Permit not found by " + permitId);
-        this.permitId = permitId;
+    public PermitNotFoundException(String resourceId) {
+        super("Permit not found by " + resourceId);
+        this.resourceId = resourceId;
     }
 
-    public String getPermitId() {
-        return permitId;
+    public String getResourceId() {
+        return resourceId;
     }
 }

@@ -25,6 +25,8 @@ public class StatsCenter {
     private final TrafficStats tcpStats = new TrafficStats();
     private final TrafficStats httpStats = new TrafficStats();
     private final ConcurrentMap<String, PermitStats> permitStats = new ConcurrentHashMap<>();
+    //TODO error radio
+    //TODO traffic & permit
 
     private StatsCenter() {
     }
@@ -33,10 +35,16 @@ public class StatsCenter {
         return INSTANCE;
     }
 
+    /**
+     * @return http traffic stats
+     */
     public TrafficStats getHttpStats() {
         return httpStats;
     }
 
+    /**
+     * @return tcp traffic stats
+     */
     public TrafficStats getTcpStats() {
         return tcpStats;
     }
@@ -46,17 +54,48 @@ public class StatsCenter {
         return permitStats.get(resourceId);
     }
 
+    /**
+     * @return unmodifiable permit stats
+     */
     public Map<String, PermitStats> permitStats() {
         return Collections.unmodifiableMap(permitStats);
     }
 
-    public PermitStats getPermitStats(String resourceId) {
-        return permitStats.get(resourceId);
+    /**
+     * @param resourceId
+     * @return
+     */
+    public StatsCenter increasePermit(String resourceId) {
+        PermitStats permitStats = this.permitStats.get(resourceId);
+        if (permitStats == null) {
+            return this;
+        }
+
+        permitStats.increase();
+        return this;
     }
 
+    /**
+     * @param resourceId
+     * @return
+     */
+    public StatsCenter decreasePermit(String resourceId) {
+        PermitStats permitStats = this.permitStats.get(resourceId);
+        if (permitStats == null) {
+            return this;
+        }
+
+        permitStats.decrease();
+        return this;
+    }
+
+    /**
+     * traffic stats
+     */
     public static class TrafficStats {
 
         private final Stats traffic = new Stats();
+        //TODO wrapper channel to protect application
         private final Set<Channel> channels = new CopyOnWriteArraySet<>();
 
         public Stats getTraffic() {
@@ -79,6 +118,9 @@ public class StatsCenter {
 
     }
 
+    /**
+     * Permit Stats
+     */
     public static class PermitStats extends Stats {
 
         private final IPermit permit;
@@ -92,13 +134,16 @@ public class StatsCenter {
         }
     }
 
+    /**
+     * Stats
+     */
     public static class Stats {
 
         private Peak peak = new Peak();
         private AtomicLong actives = new AtomicLong(0);
         private ZonedDateTime lastTimestamp;
 
-        public Stats increment() {
+        public Stats increase() {
             lastTimestamp = ZonedDateTime.now();
             long total = actives.incrementAndGet();
             if (total >= peak.getCount().get()) {
@@ -108,7 +153,7 @@ public class StatsCenter {
             return this;
         }
 
-        public Stats decrement() {
+        public Stats decrease() {
             actives.decrementAndGet();
             return this;
         }
@@ -151,6 +196,9 @@ public class StatsCenter {
 
     }
 
+    /**
+     * peak
+     */
     public static class Peak {
 
         private final AtomicLong count;

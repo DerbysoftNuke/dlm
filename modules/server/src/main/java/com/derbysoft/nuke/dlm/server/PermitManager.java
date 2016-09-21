@@ -63,18 +63,19 @@ public class PermitManager implements IPermitManager {
     @Override
     public IPermit getPermit(String resourceId) {
         IPermit permit = repository.get(resourceId);
+        //TODO optimize performance
         return (IPermit) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{IPermit.class}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 Object result = method.invoke(permit, args);
                 if ("acquire".equals(method.getName())) {
-                    StatsCenter.getInstance().getPermitStats(resourceId).increment();
+                    StatsCenter.getInstance().increasePermit(resourceId);
                 } else if ("tryAcquire".equals(method.getName())) {
                     if (Boolean.TRUE.equals(result)) {
-                        StatsCenter.getInstance().getPermitStats(resourceId).increment();
+                        StatsCenter.getInstance().increasePermit(resourceId);
                     }
                 } else if ("release".equals(method.getName())) {
-                    StatsCenter.getInstance().getPermitStats(resourceId).decrement();
+                    StatsCenter.getInstance().decreasePermit(resourceId);
                 }
                 return result;
             }

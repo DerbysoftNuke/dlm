@@ -132,6 +132,7 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
         ctx.writeAndFlush(httpResponse).addListener(ChannelFutureListener.CLOSE);
     }
 
+    //TODO update permit
     protected void status(ChannelHandlerContext ctx) throws UnsupportedEncodingException {
         StringBuilder content = new StringBuilder();
         Map<String, StatsCenter.TrafficStats> map = ImmutableMap.of("HTTP", StatsCenter.getInstance().getHttpStats(), "TCP", StatsCenter.getInstance().getTcpStats());
