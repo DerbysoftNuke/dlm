@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 /**
@@ -49,7 +51,7 @@ public class DefaultDispatcher implements IDispatcher, ApplicationContextAware {
         DefaultFullHttpResponse response = null;
         try {
             if (handlerName == null) {
-                response = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.NOT_FOUND, Unpooled.copiedBuffer("Resource is not found".getBytes()));
+                response = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.NOT_FOUND, Unpooled.copiedBuffer(notFound(uri).getBytes()));
                 response.headers().add("Content-Type", "text/html; charset=utf-8");
             } else {
                 IHandler handler = applicationContext.getBean(handlerName, IHandler.class);
@@ -68,12 +70,28 @@ public class DefaultDispatcher implements IDispatcher, ApplicationContextAware {
             response.headers().add("Content-Type", "text/html; charset=utf-8");
         }
 
+        response.headers().add("Content-Length", String.valueOf(response.content().capacity()));
+        response.headers().add("Date", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
         response.headers().add("Server", "Netty-5.0");
         return response;
+    }
+
+    protected String notFound(String uri) {
+        return new StringBuilder()
+                .append("<html>")
+                .append("<head>")
+                .append("<title>404 Not Found</title>")
+                .append("</head>")
+                .append("<body>")
+                .append("<h1>Not Found</h1>")
+                .append("<p>The requested URL ").append(uri).append(" was not found on this server.</p>")
+                .append("</body>")
+                .append("</html>").toString();
     }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
+
 }
