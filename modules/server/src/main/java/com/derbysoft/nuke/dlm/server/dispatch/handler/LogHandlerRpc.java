@@ -3,6 +3,7 @@ package com.derbysoft.nuke.dlm.server.dispatch.handler;
 import com.derby.nuke.common.module.rpc.log.LinuxLogService;
 import com.derby.nuke.common.module.rpc.log.LogService;
 import com.derbysoft.nuke.dlm.server.dispatch.RequestMapping;
+import com.sun.xml.internal.bind.v2.TODO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +15,8 @@ import java.util.List;
 @RequestMapping(uri = "/log.rpc", contentType = "text/json")
 public class LogHandlerRpc extends JsonRpcSupportHandler {
 
-    private LogService logService = new LinuxLogService("D:\\usr\\local\\logs");
+    //TODO filepath is required
+    private LogService logService = new LinuxLogService("");
 
     @Override
     public Object doExecute(String method, List params) {
