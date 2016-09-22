@@ -3,6 +3,7 @@ package com.derbysoft.nuke.dlm.server.initializer;
 import com.derbysoft.nuke.dlm.server.PermitManager;
 import com.derbysoft.nuke.dlm.server.codec.Http2PermitRequestDecoder;
 import com.derbysoft.nuke.dlm.server.codec.PermitResponse2HttpEncoder;
+import com.derbysoft.nuke.dlm.server.dispatch.Dispatcher;
 import com.derbysoft.nuke.dlm.server.handler.PermitServerHandler;
 import com.derbysoft.nuke.dlm.server.status.StatsCenter;
 import com.derbysoft.nuke.dlm.server.status.TrafficMonitorHandler;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class PermitServerHttpInitializer extends PermitServerInitializer {
 
     @Autowired
-    private PermitManager manager;
+    private Dispatcher dispatcher;
 
     @Autowired
     public PermitServerHttpInitializer(PermitServerHandler handler) {
@@ -42,7 +43,7 @@ public class PermitServerHttpInitializer extends PermitServerInitializer {
                 .addLast("http-decoder", new HttpRequestDecoder())
                 .addLast("http-encoder", new HttpResponseEncoder())
                 .addLast("http-aggregator", new HttpObjectAggregator(65536))
-                .addLast("request-decoder", new Http2PermitRequestDecoder(manager))
+                .addLast("request-decoder", new Http2PermitRequestDecoder(dispatcher))
                 .addLast("response-encoder", new PermitResponse2HttpEncoder());
 //                .addLast("http-chunked", new ChunkedWriteHandler());
     }

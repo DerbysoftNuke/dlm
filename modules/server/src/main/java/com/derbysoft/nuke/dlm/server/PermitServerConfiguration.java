@@ -1,6 +1,5 @@
 package com.derbysoft.nuke.dlm.server;
 
-import com.derby.nuke.common.module.spring.DefaultPropertyPlaceholderConfigurer;
 import com.derbysoft.nuke.dlm.IPermitManager;
 import com.derbysoft.nuke.dlm.IPermitService;
 import com.derbysoft.nuke.dlm.PermitService;
@@ -10,11 +9,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.springframework.beans.factory.annotation.*;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ComponentScans;
 import org.springframework.context.annotation.Configuration;
+import org.thymeleaf.ITemplateEngine;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,6 +64,19 @@ public class PermitServerConfiguration {
         initializers.put(tcpPort, tcpInitializer);
         initializers.put(httpPort, httpInitializer);
         return initializers;
+    }
+
+    @Bean(name = "templateEngine")
+    public ITemplateEngine templateEngine() {
+        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        resolver.setCacheTTLMs(3600000L);
+        resolver.setTemplateMode(TemplateMode.HTML);
+
+        TemplateEngine engine = new TemplateEngine();
+        engine.setTemplateResolver(resolver);
+        return engine;
     }
 
     @Bean

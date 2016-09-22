@@ -1,13 +1,8 @@
 package com.derbysoft.nuke.dlm.server.codec;
 
-import com.derbysoft.nuke.dlm.IPermit;
 import com.derbysoft.nuke.dlm.model.*;
-import com.derbysoft.nuke.dlm.server.PermitManager;
-import com.derbysoft.nuke.dlm.server.status.StatsCenter;
+import com.derbysoft.nuke.dlm.server.dispatch.Dispatcher;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -38,15 +33,6 @@ import java.util.concurrent.TimeUnit;
 public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpRequest> {
 
     private final Logger log = LoggerFactory.getLogger(Http2PermitRequestDecoder.class);
-    private static final String HELP_MESSAGE = "Usage:\n<ul>\n" +
-            " <li>/register/${resourceId}/permitname/${permitname}/spec/${spec}</li>\n" +
-            " <li>/unregister/${resourceId}</li>\n" +
-            " <li>/existing/${resourceId}</li>\n" +
-            " <li>/permit/${resourceId}/action/acquire</li>\n" +
-            " <li>/permit/${resourceId}/action/tryacquire</li>\n" +
-            " <li>/permit/${resourceId}/action/tryacquire/timeout/10/timeunit/seconds</li>\n" +
-            " <li>/permit/${resourceId}/action/release</li>\n" +
-            " </ul>\n";
 
     public static final String METHOD_REGISTER = "register";
     public static final String METHOD_UNREGISTER = "unregister";
@@ -63,10 +49,10 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
     public static final String PARAMETER_TIMEOUT = "timeout";
     public static final String PARAMETER_TIMEUNIT = "timeunit";
 
-    private final PermitManager manager;
+    private final Dispatcher dispatcher;
 
-    public Http2PermitRequestDecoder(PermitManager manager) {
-        this.manager = manager;
+    public Http2PermitRequestDecoder(Dispatcher dispatcher) {
+        this.dispatcher = dispatcher;
     }
 
     @Override
@@ -79,13 +65,6 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
         Header header = new Header(request.headers().getAndConvert("transactionId", UUID.randomUUID().toString().replace("-", "")));
         String uri = request.uri();
         log.debug("Request uri: {} from remote {}", uri, ctx.channel().remoteAddress());
-        if ("/help".equals(uri)) {
-            help(ctx);
-            return;
-        } else if ("/status".equals(uri)) {
-            status(ctx);
-            return;
-        }
 
         Map<String, String> parameters = toParameters(uri.substring(1));
         if (parameters.containsKey(METHOD_REGISTER)) {
@@ -119,93 +98,8 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
             }
         }
 
-        ctx.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, Unpooled.copiedBuffer("Resource is not found".getBytes()))).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    protected void help(ChannelHandlerContext ctx) throws UnsupportedEncodingException {
-        StringBuilder content = new StringBuilder();
-        content.append(HELP_MESSAGE);
-
-        DefaultFullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content.toString().getBytes("UTF-8")));
-        httpResponse.headers().add("Content-Type", "text/html; charset=utf-8");
-        httpResponse.headers().add("Server", "Netty-5.0");
-        ctx.writeAndFlush(httpResponse).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    //TODO update permit
-    protected void status(ChannelHandlerContext ctx) throws UnsupportedEncodingException {
-        StringBuilder content = new StringBuilder();
-        Map<String, StatsCenter.TrafficStats> map = ImmutableMap.of("HTTP", StatsCenter.getInstance().getHttpStats(), "TCP", StatsCenter.getInstance().getTcpStats());
-        for (Map.Entry<String, StatsCenter.TrafficStats> each : map.entrySet()) {
-            String type = each.getKey();
-            StatsCenter.TrafficStats trafficStats = each.getValue();
-
-            content.append("<h2>").append(type).append(" Traffic Status</h2>\n");
-            content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-            content.append("<tr>")
-                    .append("<th>").append("Peak Connections").append("</th>")
-                    .append("<th>").append("Peak Timestamp").append("</th>")
-                    .append("<th>").append("Current Active Connections").append("</th>")
-                    .append("<th>").append("Last Access Timestamp").append("</th>")
-                    .append("</tr>");
-            content.append("<tr>")
-                    .append("<td>").append(trafficStats.getTraffic().getPeak().getCount()).append("</td>")
-                    .append("<td>").append(trafficStats.getTraffic().getPeak().getTimestamp()).append("</td>")
-                    .append("<td>").append(trafficStats.getTraffic().getActives()).append("</td>")
-                    .append("<td>").append(trafficStats.getTraffic().getLastTimestamp()).append("</td>")
-                    .append("</tr>");
-            content.append("</table>\n");
-
-            content.append("<h4>Active Connections</h4>\n");
-            content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-            content.append("<tr>")
-                    .append("<th>").append("Id").append("</th>")
-                    .append("<th>").append("Local Address").append("</th>")
-                    .append("<th>").append("Remote Address").append("</th>")
-                    .append("<th>").append("Active").append("</th>")
-                    .append("<th>").append("Open").append("</th>")
-                    .append("<th>").append("Connect Timeout").append("</th>")
-                    .append("</tr>");
-            for (Channel channel : trafficStats.getChannels()) {
-                content.append("<tr>")
-                        .append("<td>").append(channel.id()).append("</td>")
-                        .append("<td>").append(channel.localAddress()).append("</td>")
-                        .append("<td>").append(channel.remoteAddress()).append("</td>")
-                        .append("<td>").append(channel.isActive()).append("</td>")
-                        .append("<td>").append(channel.isOpen()).append("</td>")
-                        .append("<td>").append(channel.config().getConnectTimeoutMillis()).append("</td>")
-                        .append("</tr>");
-            }
-            content.append("</table>\n");
-        }
-
-        content.append("<h2>Permit Status</h2>\n");
-        content.append("<table border=\"1\" bordercolor=\"#ccc\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;\">\n");
-        content.append("<tr>")
-                .append("<th>").append("Resource").append("</th>")
-                .append("<th>").append("Permit").append("</th>")
-                .append("<th>").append("Peak Permits").append("</th>")
-                .append("<th>").append("Peak Timestamp").append("</th>")
-                .append("<th>").append("Current Permits").append("</th>")
-                .append("<th>").append("Last Acquire Timestamp").append("</th>")
-                .append("</tr>");
-
-        for (Map.Entry<String, StatsCenter.PermitStats> entry : StatsCenter.getInstance().permitStats().entrySet()) {
-            content.append("<tr>")
-                    .append("<td>").append(entry.getKey()).append("</td>")
-                    .append("<td>").append(entry.getValue().getPermit()).append("</td>")
-                    .append("<td>").append(entry.getValue().getPeak().getCount()).append("</td>")
-                    .append("<td>").append(entry.getValue().getPeak().getTimestamp()).append("</td>")
-                    .append("<td>").append(entry.getValue().getActives()).append("</td>")
-                    .append("<td>").append(entry.getValue().getLastTimestamp()).append("</td>")
-                    .append("</tr>");
-        }
-        content.append("</table>\n");
-
-        DefaultFullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content.toString().getBytes("UTF-8")));
-        httpResponse.headers().add("Content-Type", "text/html; charset=utf-8");
-        httpResponse.headers().add("Server", "Netty-5.0");
-        ctx.writeAndFlush(httpResponse).addListener(ChannelFutureListener.CLOSE);
+        DefaultFullHttpResponse response = dispatcher.invoke(request);
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
     private static Map<String, String> toParameters(String string) {

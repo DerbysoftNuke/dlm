@@ -1,0 +1,65 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset='utf-8'>
+    <title>DLM Status</title>
+</head>
+<body>
+<div th:each="trafficEntry : ${traffics}">
+    <h2><span th:text="${trafficEntry.key}"></span> Traffic Status</h2>
+    <table border="1" bordercolor="#ccc" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
+        <tr>
+            <th>Peak Connections</th>
+            <th>Peak Timestamp</th>
+            <th>Current Active Connections</th>
+            <th>Last Access Timestamp</th>
+        </tr>
+        <tr>
+            <td th:text="${trafficEntry.value.traffic.peak.count}">1</td>
+            <td th:text="${trafficEntry.value.traffic.peak.timestamp}">..</td>
+            <td th:text="${trafficEntry.value.traffic.actives}">1</td>
+            <td th:text="${trafficEntry.value.traffic.lastTimestamp}">..</td>
+        </tr>
+    </table>
+    <h4>Active Connections</h4>
+    <table border="1" bordercolor="#ccc" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
+        <tr>
+            <th>ID</th>
+            <th>Remote Address</th>
+            <th>Local Address</th>
+            <th>Active</th>
+            <th>Open</th>
+            <th>Connect Timeout</th>
+        </tr>
+        <tr th:each="channel : ${trafficEntry.value.channels}">
+            <td th:text="${channel.id()}">...</td>
+            <td th:text="${channel.remoteAddress()}">...</td>
+            <td th:text="${channel.localAddress()}">...</td>
+            <td th:text="${channel.active}">...</td>
+            <td th:text="${channel.open}">...</td>
+            <td th:text="${channel.config().connectTimeoutMillis}">...</td>
+        </tr>
+    </table>
+</div>
+<div>
+    <h2>Permit Status</h2>
+    <table border="1" bordercolor="#ccc" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
+        <tr>
+            <th>Resource</th>
+            <th>Permit</th>
+            <th>Peak Permits</th>
+            <th>Peak Timestamp</th>
+            <th>Current Permits</th>
+            <th>Last Acquire Timestamp</th>
+        </tr>
+        <tr th:each="permitStatsEntry : ${permitStats}">
+            <td th:text="${permitStatsEntry.key}">...</td>
+            <td th:text="${permitStatsEntry.value.permit}">...</td>
+            <td th:text="${permitStatsEntry.value.peak.count}">...</td>
+            <td th:text="${permitStatsEntry.value.peak.timestamp}">...</td>
+            <td th:text="${permitStatsEntry.value.actives}">...</td>
+            <td th:text="${permitStatsEntry.value.lastTimestamp}">...</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

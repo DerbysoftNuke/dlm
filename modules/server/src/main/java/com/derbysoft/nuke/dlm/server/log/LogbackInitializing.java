@@ -55,6 +55,10 @@ public class LogbackInitializing {
                 return;
             }
 
+            if (!resolver.containsProperty("log.file.path")) {
+                return;
+            }
+
             Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
             loggerContext.reset();
 
