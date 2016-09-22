@@ -9,8 +9,4 @@ public interface IHandler {
 
     String execute(String uri, HttpMethod method, String request);
 
-    default String getContentType() {
-        return "text/html";
-    }
-
 }

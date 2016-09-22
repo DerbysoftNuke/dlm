@@ -1,11 +1,14 @@
 package com.derbysoft.nuke.dlm.server.dispatch;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
@@ -16,46 +19,39 @@ import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
  * Created by passyt on 16-9-22.
  */
 @Component
-public class DefaultDispatcher implements IDispatcher, ApplicationContextAware {
+public class DefaultDispatcher implements IDispatcher, ApplicationContextAware, InitializingBean {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultDispatcher.class);
-    private static Properties PROPERTIES = new Properties();
 
     private ApplicationContext applicationContext;
-
-    static {
-        try {
-            PROPERTIES.load(DefaultDispatcher.class.getClassLoader().getResourceAsStream("handlers.properties"));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
+    private Map<String, HandlerWrapper> handlers = new HashMap<>();
 
     @Override
     public DefaultFullHttpResponse invoke(FullHttpRequest request) {
         String uri = request.uri();
-        HttpMethod method = request.method();
-
-        String handlerName = PROPERTIES.getProperty(uri + "." + method);
-        if (handlerName == null) {
-            handlerName = PROPERTIES.getProperty(uri);
+        String target = uri;
+        if (target.indexOf("?") > 0) {
+            target = target.substring(0, target.indexOf("?"));
         }
 
-        log.debug("Process request uri {} and method {} by handler {}", uri, method, handlerName);
+        HttpMethod method = request.method();
+        HandlerWrapper handler = handlers.get(target);
+        log.debug("Process request uri {} and method {} by handler {}", uri, method, handler);
         DefaultFullHttpResponse response = null;
         try {
-            if (handlerName == null) {
+            if (handler == null) {
                 response = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.NOT_FOUND, Unpooled.copiedBuffer(notFound(uri).getBytes()));
                 response.headers().add("Content-Type", "text/html; charset=utf-8");
             } else {
-                IHandler handler = applicationContext.getBean(handlerName, IHandler.class);
-                String content = handler.execute(uri, method, request.content().toString(Charset.forName("UTF-8")));
+                String content = handler.getHandler().execute(uri, method, request.content().toString(Charset.forName("UTF-8")));
 
                 response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content.getBytes(Charsets.UTF_8)));
                 response.headers().add("Content-Type", handler.getContentType() + "; charset=utf-8");
@@ -92,6 +88,59 @@ public class DefaultDispatcher implements IDispatcher, ApplicationContextAware {
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        Map<String, Object> beans = applicationContext.getBeansWithAnnotation(RequestMapping.class);
+        for (Object object : beans.values()) {
+            if (object instanceof IHandler) {
+                IHandler handler = IHandler.class.cast(object);
+                RequestMapping requestMapping = handler.getClass().getAnnotation(RequestMapping.class);
+                handlers.put(requestMapping.uri(), new HandlerWrapper(handler, requestMapping.contentType()));
+            }
+        }
+    }
+
+    private static class HandlerWrapper {
+
+        private final IHandler handler;
+        private final String contentType;
+
+        public HandlerWrapper(IHandler handler, String contentType) {
+            this.handler = handler;
+            this.contentType = contentType;
+        }
+
+        public IHandler getHandler() {
+            return handler;
+        }
+
+        public String getContentType() {
+            return contentType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof HandlerWrapper)) return false;
+            HandlerWrapper that = (HandlerWrapper) o;
+            return Objects.equal(handler, that.handler) &&
+                    Objects.equal(contentType, that.contentType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(handler, contentType);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("handler", handler)
+                    .add("contentType", contentType)
+                    .toString();
+        }
     }
 
 }

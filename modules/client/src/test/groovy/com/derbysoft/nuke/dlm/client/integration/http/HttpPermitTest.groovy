@@ -6,7 +6,9 @@ import com.derbysoft.nuke.dlm.client.tcp.TcpPermitManager
 import org.junit.Before
 import org.junit.Test
 
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Created by passyt on 16-9-18.
@@ -55,6 +57,34 @@ class HttpPermitTest {
     @Test
     def void release() {
         manager.getPermit(resourceId).release();
+    }
+
+    @Test
+    def void performance() {
+        def tasks = [];
+        def total = 1000;
+        AtomicInteger a = new AtomicInteger(total);
+        (1..total).each {
+            tasks.add({
+                def permit = manager.getPermit(resourceId)
+                try {
+                    println("acquiring...")
+                    permit.acquire();
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                } finally {
+                    permit.release();
+                    println("acquired, left " + a.decrementAndGet());
+                }
+            });
+        }
+
+        def pool = Executors.newFixedThreadPool(20);
+        def start = System.currentTimeMillis();
+        pool.invokeAll(tasks);
+        def end = System.currentTimeMillis();
+        println((end - start) + " ms: " + total * 1000f / (end - start) + " tps");
+        pool.shutdown();
     }
 
 }
