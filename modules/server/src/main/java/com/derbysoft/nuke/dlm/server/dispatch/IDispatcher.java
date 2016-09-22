@@ -6,7 +6,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 /**
  * Created by passyt on 16-9-22.
  */
-public interface Dispatcher {
+public interface IDispatcher {
 
     DefaultFullHttpResponse invoke(FullHttpRequest request);
 

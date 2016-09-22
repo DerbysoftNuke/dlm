@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Properties;
 
@@ -21,7 +20,7 @@ import java.util.Properties;
  * Created by passyt on 16-9-22.
  */
 @Component
-public class DefaultDispatcher implements Dispatcher, ApplicationContextAware {
+public class DefaultDispatcher implements IDispatcher, ApplicationContextAware {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultDispatcher.class);
     private static Properties PROPERTIES = new Properties();

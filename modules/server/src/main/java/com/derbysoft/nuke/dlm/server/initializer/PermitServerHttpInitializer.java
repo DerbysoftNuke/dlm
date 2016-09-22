@@ -1,9 +1,8 @@
 package com.derbysoft.nuke.dlm.server.initializer;
 
-import com.derbysoft.nuke.dlm.server.PermitManager;
 import com.derbysoft.nuke.dlm.server.codec.Http2PermitRequestDecoder;
 import com.derbysoft.nuke.dlm.server.codec.PermitResponse2HttpEncoder;
-import com.derbysoft.nuke.dlm.server.dispatch.Dispatcher;
+import com.derbysoft.nuke.dlm.server.dispatch.IDispatcher;
 import com.derbysoft.nuke.dlm.server.handler.PermitServerHandler;
 import com.derbysoft.nuke.dlm.server.status.StatsCenter;
 import com.derbysoft.nuke.dlm.server.status.TrafficMonitorHandler;
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class PermitServerHttpInitializer extends PermitServerInitializer {
 
     @Autowired
-    private Dispatcher dispatcher;
+    private IDispatcher dispatcher;
 
     @Autowired
     public PermitServerHttpInitializer(PermitServerHandler handler) {

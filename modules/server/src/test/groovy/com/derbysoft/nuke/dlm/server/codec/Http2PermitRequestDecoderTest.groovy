@@ -2,7 +2,9 @@ package com.derbysoft.nuke.dlm.server.codec
 
 import com.derbysoft.nuke.dlm.model.*
 import com.derbysoft.nuke.dlm.server.PermitManager
+import com.derbysoft.nuke.dlm.server.dispatch.IDispatcher
 import io.netty.buffer.Unpooled
+import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
@@ -21,15 +23,15 @@ class Http2PermitRequestDecoderTest extends Specification {
     def Http2PermitRequestDecoder decoder;
     def FullHttpRequest request;
     def ChannelHandlerContext ctx;
-    def PermitManager manager;
+    def IDispatcher dispatcher;
     @Shared
     def resourceId = UUID.randomUUID().toString();
     @Shared
     def transactionId = UUID.randomUUID().toString();
 
     def setup() {
-        manager = Mock();
-        decoder = new Http2PermitRequestDecoder(manager);
+        dispatcher = Mock();
+        decoder = new Http2PermitRequestDecoder(dispatcher);
         request = Mock();
         ctx = Mock();
     }
@@ -39,12 +41,15 @@ class Http2PermitRequestDecoderTest extends Specification {
         def out = [];
         def decoderResult = Mock(DecoderResult);
         def httpHeaders = Mock(HttpHeaders)
+        def channel = Mock(Channel);
 
         when:
         decoder.decode(ctx, request, out);
 
         then:
         1 * request.decoderResult() >> decoderResult
+        1 * ctx.channel() >> channel
+        1 * channel.remoteAddress() >> null
         1 * decoderResult.isSuccess() >> true
         1 * request.headers() >> httpHeaders
         1 * httpHeaders.getAndConvert("transactionId", _) >> transactionId
@@ -64,48 +69,6 @@ class Http2PermitRequestDecoderTest extends Specification {
         "/permit/${resourceId}/action/tryacquire"                            | new TryAcquireRequest(resourceId, new Header(transactionId))
         "/permit/${resourceId}/action/tryacquire/timeout/1/timeunit/seconds" | new TryAcquireRequest(resourceId, 1L, TimeUnit.SECONDS, new Header(transactionId))
         "/permit/${resourceId}/action/release"                               | new ReleaseRequest(resourceId, new Header(transactionId))
-    }
-
-    void help() {
-        given:
-        def out = [];
-        def decoderResult = Mock(DecoderResult);
-        def actualResponse = null;
-        def channelFuture = Mock(ChannelFuture);
-        def httpHeaders = new DefaultHttpHeaders();
-
-        when:
-        decoder.decode(ctx, request, out);
-
-        then:
-        1 * request.decoderResult() >> decoderResult
-        1 * decoderResult.isSuccess() >> true
-        1 * request.headers() >> httpHeaders
-        1 * request.uri() >> "/help"
-        1 * ctx.writeAndFlush(_) >> {
-            actualResponse = it[0];
-            channelFuture
-        }
-        1 * channelFuture.addListener(ChannelFutureListener.CLOSE)
-
-        expect:
-        def content = '''Usage:
-<ul>
- <li>/register/${resourceId}/permitname/${permitname}/spec/${spec}</li>
- <li>/unregister/${resourceId}</li>
- <li>/existing/${resourceId}</li>
- <li>/permit/${resourceId}/action/acquire</li>
- <li>/permit/${resourceId}/action/tryacquire</li>
- <li>/permit/${resourceId}/action/tryacquire/timeout/10/timeunit/seconds</li>
- <li>/permit/${resourceId}/action/release</li>
- </ul>
-'''
-
-        def DefaultFullHttpResponse expectedResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content.getBytes("UTF-8")));
-        expectedResponse.headers().add("Content-Type", "text/html; charset=utf-8");
-        expectedResponse.headers().add("Server", "Netty-5.0");
-
-        expectedResponse == actualResponse
     }
 
 }

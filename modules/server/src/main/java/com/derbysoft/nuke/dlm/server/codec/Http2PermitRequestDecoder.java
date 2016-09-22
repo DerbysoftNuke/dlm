@@ -1,7 +1,7 @@
 package com.derbysoft.nuke.dlm.server.codec;
 
 import com.derbysoft.nuke.dlm.model.*;
-import com.derbysoft.nuke.dlm.server.dispatch.Dispatcher;
+import com.derbysoft.nuke.dlm.server.dispatch.IDispatcher;
 import com.google.common.base.Splitter;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -49,9 +49,9 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
     public static final String PARAMETER_TIMEOUT = "timeout";
     public static final String PARAMETER_TIMEUNIT = "timeunit";
 
-    private final Dispatcher dispatcher;
+    private final IDispatcher dispatcher;
 
-    public Http2PermitRequestDecoder(Dispatcher dispatcher) {
+    public Http2PermitRequestDecoder(IDispatcher dispatcher) {
         this.dispatcher = dispatcher;
     }
 
