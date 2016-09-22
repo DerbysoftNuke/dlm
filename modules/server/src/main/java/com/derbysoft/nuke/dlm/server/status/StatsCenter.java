@@ -50,8 +50,11 @@ public class StatsCenter {
     }
 
     public Stats register(String resourceId, IPermit permit) {
-        permitStats.putIfAbsent(resourceId, new PermitStats(permit));
-        return permitStats.get(resourceId);
+        PermitStats permitStats = this.permitStats.putIfAbsent(resourceId, new PermitStats(permit));
+        if (permitStats != null) {
+            permitStats.setPermit(permit);
+        }
+        return this.permitStats.get(resourceId);
     }
 
     /**
@@ -107,11 +110,13 @@ public class StatsCenter {
         }
 
         public TrafficStats active(Channel channel) {
+            traffic.increase();
             channels.add(channel);
             return this;
         }
 
         public TrafficStats inactive(Channel channel) {
+            traffic.decrease();
             channels.remove(channel);
             return this;
         }
@@ -123,7 +128,7 @@ public class StatsCenter {
      */
     public static class PermitStats extends Stats {
 
-        private final IPermit permit;
+        private IPermit permit;
 
         public PermitStats(IPermit permit) {
             this.permit = permit;
@@ -131,6 +136,10 @@ public class StatsCenter {
 
         public IPermit getPermit() {
             return permit;
+        }
+
+        public void setPermit(IPermit permit) {
+            this.permit = permit;
         }
     }
 

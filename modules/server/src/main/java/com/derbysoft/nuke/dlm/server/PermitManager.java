@@ -31,7 +31,9 @@ public class PermitManager implements IPermitManager {
     public PermitManager(IPermitRepository repository) {
         this.repository = repository;
         for (Map.Entry<String, IPermit> each : repository.getAll().entrySet()) {
-            register(each.getKey(), each.getValue().name(), new PermitSpec(each.getValue().spec()));
+            log.info("Recovering permit {} with spec {} by id {}", each.getValue().name(), each.getValue().spec(), each.getKey());
+            IPermit permit = buildPermit(each.getValue().name(), new PermitSpec(each.getValue().spec()));
+            StatsCenter.getInstance().register(each.getKey(), permit);
         }
     }
 
@@ -46,6 +48,15 @@ public class PermitManager implements IPermitManager {
             log.warn("An existing permit {} with id {}, not allow to register", repository.get(resourceId), resourceId);
             return false;
         }
+        return true;
+    }
+
+    public boolean update(String resourceId, String permitName, PermitSpec spec) {
+        log.debug("Update permit {} with spec {} by id {}", permitName, spec, resourceId);
+
+        IPermit permit = buildPermit(permitName, spec);
+        StatsCenter.getInstance().register(resourceId, permit);
+        repository.put(resourceId, permit);
         return true;
     }
 

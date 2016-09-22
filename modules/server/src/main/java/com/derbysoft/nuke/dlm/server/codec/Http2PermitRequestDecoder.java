@@ -78,7 +78,7 @@ public class Http2PermitRequestDecoder extends MessageToMessageDecoder<FullHttpR
 
         Header header = new Header(request.headers().getAndConvert("transactionId", UUID.randomUUID().toString().replace("-", "")));
         String uri = request.uri();
-        log.debug("Request uri: {}", uri);
+        log.debug("Request uri: {} from remote {}", uri, ctx.channel().remoteAddress());
         if ("/help".equals(uri)) {
             help(ctx);
             return;

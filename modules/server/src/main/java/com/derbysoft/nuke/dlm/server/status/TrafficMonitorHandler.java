@@ -16,13 +16,11 @@ public class TrafficMonitorHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        trafficStats.getTraffic().increase();
         trafficStats.active(ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        trafficStats.getTraffic().decrease();
         trafficStats.inactive(ctx.channel());
     }
 

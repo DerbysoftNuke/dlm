@@ -40,7 +40,7 @@ public class PermitRepository implements IPermitRepository {
     @Override
     public IPermit put(String resourceId, IPermit permit) {
         try {
-            return permits.putIfAbsent(resourceId, permit);
+            return permits.put(resourceId, permit);
         } finally {
             db.commit();
         }

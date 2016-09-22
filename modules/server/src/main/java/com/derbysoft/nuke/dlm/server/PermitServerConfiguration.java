@@ -1,8 +1,10 @@
 package com.derbysoft.nuke.dlm.server;
 
+import com.derby.nuke.common.module.spring.DefaultPropertyPlaceholderConfigurer;
 import com.derbysoft.nuke.dlm.IPermitManager;
 import com.derbysoft.nuke.dlm.IPermitService;
 import com.derbysoft.nuke.dlm.PermitService;
+import com.derbysoft.nuke.dlm.server.config.DefaultConfigurer;
 import com.derbysoft.nuke.dlm.server.initializer.PermitServerInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -59,6 +61,11 @@ public class PermitServerConfiguration {
         initializers.put(tcpPort, tcpInitializer);
         initializers.put(httpPort, httpInitializer);
         return initializers;
+    }
+
+    @Bean
+    public static DefaultConfigurer externalConfigurer() {
+        return new DefaultConfigurer("nuke.dlm");
     }
 
 }
