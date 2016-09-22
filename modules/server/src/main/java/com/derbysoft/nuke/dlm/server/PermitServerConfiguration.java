@@ -1,5 +1,9 @@
 package com.derbysoft.nuke.dlm.server;
 
+import com.derby.nuke.common.module.file.FileService;
+import com.derby.nuke.common.module.file.IFileService;
+import com.derby.nuke.common.module.rpc.log.LinuxLogService;
+import com.derby.nuke.common.module.rpc.log.LogService;
 import com.derbysoft.nuke.dlm.IPermitManager;
 import com.derbysoft.nuke.dlm.IPermitService;
 import com.derbysoft.nuke.dlm.PermitService;
@@ -19,6 +23,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,6 +87,24 @@ public class PermitServerConfiguration {
     @Bean
     public static DefaultConfigurer externalConfigurer() {
         return new DefaultConfigurer("nuke.dlm");
+    }
+
+    @Bean
+    public LogService logService(@Value("${log.file.path:null}") String logPath) {
+        if (logPath == null) {
+            return null;
+        }
+
+        return new LinuxLogService(new File(logPath).getParent());
+    }
+
+    @Bean
+    public IFileService fileService(@Value("${log.file.path:null}") String logPath) {
+        if (logPath == null) {
+            return null;
+        }
+
+        return new FileService(new File(logPath).getParent());
     }
 
 }

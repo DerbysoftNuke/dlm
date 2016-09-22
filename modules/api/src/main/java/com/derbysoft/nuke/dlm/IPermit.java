@@ -1,6 +1,5 @@
 package com.derbysoft.nuke.dlm;
 
-import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**

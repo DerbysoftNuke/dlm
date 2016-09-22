@@ -2,7 +2,6 @@ package com.derbysoft.nuke.dlm.server.codec
 
 import com.alibaba.fastjson.JSON
 import com.derbysoft.nuke.dlm.model.Header
-import com.derbysoft.nuke.dlm.model.IPermitResponse
 import com.derbysoft.nuke.dlm.model.RegisterResponse
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFuture

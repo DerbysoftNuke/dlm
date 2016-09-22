@@ -1,7 +1,5 @@
 package com.derbysoft.nuke.dlm.standalone;
 
-import com.derbysoft.nuke.dlm.IPermit;
-import com.derbysoft.nuke.dlm.PermitSpec;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.RateLimiter;
 

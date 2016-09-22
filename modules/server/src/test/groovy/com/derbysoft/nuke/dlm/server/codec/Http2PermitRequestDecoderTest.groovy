@@ -1,15 +1,12 @@
 package com.derbysoft.nuke.dlm.server.codec
 
 import com.derbysoft.nuke.dlm.model.*
-import com.derbysoft.nuke.dlm.server.PermitManager
 import com.derbysoft.nuke.dlm.server.dispatch.IDispatcher
-import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.DecoderResult
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaders
 import spock.lang.Shared
 import spock.lang.Specification
 

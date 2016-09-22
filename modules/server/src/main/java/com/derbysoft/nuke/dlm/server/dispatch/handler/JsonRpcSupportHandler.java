@@ -6,8 +6,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +31,7 @@ public abstract class JsonRpcSupportHandler implements IHandler {
             Object result = doExecute(method, params);
             response.put("result", result);
         } catch (Exception e) {
-            log.error("Json rpc failed", e);
+            log.error("Invoke json rpc failed by uri " + uri + ", and request " + text, e);
             response.put("error", e.toString());
         }
         return JSON.toJSONString(response);

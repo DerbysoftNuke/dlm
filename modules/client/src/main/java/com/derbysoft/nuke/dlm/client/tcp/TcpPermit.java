@@ -1,11 +1,11 @@
 package com.derbysoft.nuke.dlm.client.tcp;
 
 import com.derbysoft.nuke.dlm.IPermit;
-import com.derbysoft.nuke.dlm.exception.PermitException;
-import com.derbysoft.nuke.dlm.model.*;
+import com.derbysoft.nuke.dlm.model.AcquireRequest;
+import com.derbysoft.nuke.dlm.model.ReleaseRequest;
+import com.derbysoft.nuke.dlm.model.TryAcquireRequest;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 
 import java.util.concurrent.TimeUnit;

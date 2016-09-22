@@ -1,13 +1,10 @@
 package com.derbysoft.nuke.dlm.client.integration.tcp
 
-import com.derbysoft.nuke.dlm.IPermit
 import com.derbysoft.nuke.dlm.PermitSpec
 import com.derbysoft.nuke.dlm.client.tcp.TcpPermitManager
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger

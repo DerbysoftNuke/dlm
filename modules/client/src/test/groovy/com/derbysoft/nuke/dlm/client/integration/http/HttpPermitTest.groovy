@@ -2,7 +2,6 @@ package com.derbysoft.nuke.dlm.client.integration.http
 
 import com.derbysoft.nuke.dlm.PermitSpec
 import com.derbysoft.nuke.dlm.client.http.HttpPermitManager
-import com.derbysoft.nuke.dlm.client.tcp.TcpPermitManager
 import org.junit.Before
 import org.junit.Test
 

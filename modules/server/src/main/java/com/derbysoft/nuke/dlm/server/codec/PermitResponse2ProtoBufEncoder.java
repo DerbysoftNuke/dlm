@@ -8,7 +8,6 @@ import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
 
 import static com.derbysoft.nuke.dlm.model.Protobuf.Response.ResponseType.*;
-import static com.derbysoft.nuke.dlm.model.Protobuf.Response.ResponseType.ACQUIRE_RESPONSE;
 
 /**
  * Created by passyt on 16-9-4.

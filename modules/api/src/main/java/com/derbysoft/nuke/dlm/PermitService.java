@@ -3,8 +3,6 @@ package com.derbysoft.nuke.dlm;
 import com.derbysoft.nuke.dlm.model.IPermitRequest;
 import com.derbysoft.nuke.dlm.model.IPermitResponse;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Created by passyt on 16-9-4.
  */

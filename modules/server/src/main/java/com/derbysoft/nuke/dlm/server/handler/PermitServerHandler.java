@@ -1,11 +1,9 @@
 package com.derbysoft.nuke.dlm.server.handler;
 
-import com.alibaba.fastjson.JSON;
 import com.derbysoft.nuke.dlm.IPermitService;
 import com.derbysoft.nuke.dlm.model.IPermitRequest;
 import com.derbysoft.nuke.dlm.model.IPermitResponse;
 import com.derbysoft.nuke.dlm.model.Protobuf;
-import com.derbysoft.nuke.dlm.utils.ProtoBufUtils;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
@@ -20,7 +18,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import static com.derbysoft.nuke.dlm.model.Protobuf.Response.ResponseType.PING_RESPONSE;
 
