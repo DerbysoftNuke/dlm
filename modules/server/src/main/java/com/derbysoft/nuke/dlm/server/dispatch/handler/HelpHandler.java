@@ -17,7 +17,7 @@ public class HelpHandler extends TemplateSupportHandler implements IHandler {
 
     @Override
     public String execute(String uri, HttpMethod method, String request) {
-        return executeWith("help.html", null);
+        return executeWith("help", null);
     }
 
 }
