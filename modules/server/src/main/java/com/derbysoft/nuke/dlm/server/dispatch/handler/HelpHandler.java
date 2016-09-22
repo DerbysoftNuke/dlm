@@ -11,7 +11,7 @@ import org.thymeleaf.ITemplateEngine;
  */
 @Component
 @RequestMapping(uri = "/help")
-public class HelpHandler extends TemplateSupportHandler implements IHandler {
+public class HelpHandler extends TemplateSupport implements IHandler {
 
     public HelpHandler(ITemplateEngine templateEngine) {
         super(templateEngine);

@@ -15,7 +15,7 @@ import java.util.Map;
  */
 @Component
 @RequestMapping(uri = "/status")
-public class StatusHandler extends TemplateSupportHandler implements IHandler {
+public class StatusHandler extends TemplateSupport implements IHandler {
 
     public StatusHandler(ITemplateEngine templateEngine) {
         super(templateEngine);

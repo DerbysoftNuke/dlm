@@ -13,11 +13,11 @@ import java.util.Map;
 /**
  * Created by passyt on 16-9-22.
  */
-public abstract class TemplateSupportHandler {
+public abstract class TemplateSupport {
 
     protected final ITemplateEngine templateEngine;
 
-    public TemplateSupportHandler(ITemplateEngine templateEngine) {
+    public TemplateSupport(ITemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
     }
 
