@@ -73,7 +73,7 @@ public class LeakyBucketPermit extends StandalonePermit {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("stableRate", String.format(Locale.ROOT, "%3.1fqps", rateLimiter.getRate()))
-                .toString() + "@" + Integer.toHexString(hashCode());
+                .toString();
     }
 
 }

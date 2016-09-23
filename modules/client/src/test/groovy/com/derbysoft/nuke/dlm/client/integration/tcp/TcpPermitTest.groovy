@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class TcpPermitTest {
 
     def TcpPermitManager manager;
-    def resourceId = "TokenBucketPermit_1";
+    def resourceId = "123";
 
     @Before
     def void startup() {
@@ -65,7 +65,7 @@ class TcpPermitTest {
     @Test
     def void performance() {
         def tasks = [];
-        def total = 5;
+        def total = 20000;
         AtomicInteger a = new AtomicInteger(total);
         (1..total).each {
             tasks.add({

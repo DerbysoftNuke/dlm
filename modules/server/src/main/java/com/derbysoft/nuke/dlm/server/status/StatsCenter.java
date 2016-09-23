@@ -98,6 +98,16 @@ public class StatsCenter {
         return this;
     }
 
+    public StatsCenter increaseFailPermit(String resourceId) {
+        PermitStats permitStats = this.permitStats.get(resourceId);
+        if (permitStats == null) {
+            return this;
+        }
+
+        permitStats.increaseFailedPermits();
+        return this;
+    }
+
     /**
      * traffic stats
      */
@@ -136,6 +146,7 @@ public class StatsCenter {
 
         private IPermit permit;
         private final Duration duration = new Duration();
+        private final AtomicLong failedPermits = new AtomicLong(0);
 
         public PermitStats(IPermit permit) {
             this.permit = permit;
@@ -151,6 +162,15 @@ public class StatsCenter {
 
         public Duration getDuration() {
             return duration;
+        }
+
+        public AtomicLong getFailedPermits() {
+            return failedPermits;
+        }
+
+        public PermitStats increaseFailedPermits() {
+            failedPermits.incrementAndGet();
+            return this;
         }
     }
 
