@@ -40,7 +40,7 @@ public class JsonRpcSupportStatusHandler implements IHandler {
             StatsCenter.TrafficStats stats = entry.getValue();
             Map<String,Object> trafficStatus = Maps.newHashMap();
             trafficStatus.put("peakConnections", stats.getTraffic().getPeak().getCount());
-            trafficStatus.put("",stats.getTraffic().getPeak().getTimestamp());
+            trafficStatus.put("peakTimestamp",stats.getTraffic().getPeak().getTimestamp());
             trafficStatus.put("currentActiveConnections",stats.getTraffic().getActives());
             trafficStatus.put("lastAccessTimestamp",stats.getTraffic().getLastTimestamp());
 
@@ -74,7 +74,7 @@ public class JsonRpcSupportStatusHandler implements IHandler {
             each.put("resource", key.toString());
             each.put("permitName", permitStats.getPermit() == null ? "" : permitStats.getPermit().toString());
             each.put("acquireDuration", ImmutableMap.of("max", permitStats.getDuration().getMax() == null ? 0 : permitStats.getDuration().getMax(), "min", permitStats.getDuration().getMin() == null ? 0 : permitStats.getDuration().getMin(), "avg", permitStats.getDuration().getAvg()));
-            each.put("permits", ImmutableMap.of("", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount()  + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
+            each.put("permits", ImmutableMap.of("peakTimestamp", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount()  + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
             each.put("lastAcquireTimestamp", permitStats.getLastTimestamp());
             permitStatuses.add(each);
         }
