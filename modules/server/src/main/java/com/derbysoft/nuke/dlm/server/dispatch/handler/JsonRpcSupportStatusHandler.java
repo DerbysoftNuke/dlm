@@ -13,19 +13,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.thymeleaf.ITemplateEngine;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Created by suny on 2016-09-23.
+ * Created by DT219 on 2016-09-23.
  */
-
 @Component
 @RequestMapping(uri = "/status.rpc")
-public class StatusHandlerRpc extends TemplateSupport implements IHandler {
+public class JsonRpcSupportStatusHandler extends TemplateSupport implements IHandler {
 
-    public StatusHandlerRpc(ITemplateEngine templateEngine) {
+    public JsonRpcSupportStatusHandler(ITemplateEngine templateEngine) {
         super(templateEngine);
     }
 
@@ -85,4 +83,6 @@ public class StatusHandlerRpc extends TemplateSupport implements IHandler {
         }
         return permitStatuses;
     }
+
+
 }
