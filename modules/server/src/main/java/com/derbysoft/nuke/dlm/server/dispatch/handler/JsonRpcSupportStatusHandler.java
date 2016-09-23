@@ -35,29 +35,30 @@ public class JsonRpcSupportStatusHandler implements IHandler {
             return Maps.newHashMap();
         }
         Map<String,Object> map = Maps.newHashMap();
+        List<Map<String,Object>> trafficStatuses = Lists.newArrayList();
         for(Map.Entry<String,StatsCenter.TrafficStats> entry : traffics.entrySet()){
-            String type = entry.getKey();
             StatsCenter.TrafficStats stats = entry.getValue();
-            Map<String,Object> trafficSttus = Maps.newHashMap();
-            trafficSttus.put("peakConnections", stats.getTraffic().getPeak().getCount());
-            trafficSttus.put("peakTimestamp",stats.getTraffic().getPeak().getTimestamp());
-            trafficSttus.put("currentActiveConnections",stats.getTraffic().getActives());
-            trafficSttus.put("lastAccessTimestamp",stats.getTraffic().getLastTimestamp());
+            Map<String,Object> trafficStatus = Maps.newHashMap();
+            trafficStatus.put("peakConnections", stats.getTraffic().getPeak().getCount());
+            trafficStatus.put("",stats.getTraffic().getPeak().getTimestamp());
+            trafficStatus.put("currentActiveConnections",stats.getTraffic().getActives());
+            trafficStatus.put("lastAccessTimestamp",stats.getTraffic().getLastTimestamp());
 
             List<Map<String,Object>> activeConnectionses = Lists.newArrayList();
             for (Channel channel : stats.getChannels()) {
                 Map<String,Object> each = Maps.newHashMap();
-                each.put("id",channel.id());
-                each.put("remoteAddress",channel.remoteAddress());
-                each.put("localAddress",channel.localAddress());
+                each.put("id",channel.id().toString());
+                each.put("remoteAddress",channel.remoteAddress().toString());
+                each.put("localAddress",channel.localAddress().toString());
                 each.put("active",channel.isActive());
                 each.put("open",channel.isOpen());
                 each.put("connectTimeout",channel.config().getConnectTimeoutMillis());
                 activeConnectionses.add(each);
             }
-            trafficSttus.put(type+ "ActiveConnections",activeConnectionses);
-            map.put(type,trafficSttus);
+            trafficStatus.put("activeConnections",activeConnectionses);
+            trafficStatuses.add(trafficStatus);
         }
+        map.put("trafficStatuses",trafficStatuses);
         return map;
     }
 
@@ -70,10 +71,10 @@ public class JsonRpcSupportStatusHandler implements IHandler {
             Map<String, Object> each = Maps.newHashMap();
             String key = entry.getKey();
             StatsCenter.PermitStats permitStats = entry.getValue();
-            each.put("resource", key);
-            each.put("permitName", permitStats.getPermit());
+            each.put("resource", key.toString());
+            each.put("permitName", permitStats.getPermit() == null ? "" : permitStats.getPermit().toString());
             each.put("acquireDuration", ImmutableMap.of("max", permitStats.getDuration().getMax() == null ? 0 : permitStats.getDuration().getMax(), "min", permitStats.getDuration().getMin() == null ? 0 : permitStats.getDuration().getMin(), "avg", permitStats.getDuration().getAvg()));
-            each.put("permits", ImmutableMap.of("peakTimestamp", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount()  + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
+            each.put("permits", ImmutableMap.of("", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount()  + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
             each.put("lastAcquireTimestamp", permitStats.getLastTimestamp());
             permitStatuses.add(each);
         }
