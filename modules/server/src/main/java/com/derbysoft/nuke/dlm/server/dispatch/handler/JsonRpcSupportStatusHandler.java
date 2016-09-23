@@ -11,7 +11,6 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.thymeleaf.ITemplateEngine;
 
 import java.util.List;
 import java.util.Map;
