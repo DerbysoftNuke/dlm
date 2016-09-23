@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 
@@ -74,23 +72,22 @@ public class PermitManager implements IPermitManager {
     public IPermit getPermit(String resourceId) {
         IPermit permit = repository.get(resourceId);
         //TODO optimize performance
-        return (IPermit) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{IPermit.class}, new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                long start = System.currentTimeMillis();
-                Object result = method.invoke(permit, args);
-                long end = System.currentTimeMillis();
-                if ("acquire".equals(method.getName())) {
+        return (IPermit) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{IPermit.class}, (proxy, method, args) -> {
+            long start = System.currentTimeMillis();
+            Object result = method.invoke(permit, args);
+            long end = System.currentTimeMillis();
+            if ("acquire".equals(method.getName())) {
+                StatsCenter.getInstance().increasePermit(resourceId, end - start);
+            } else if ("tryAcquire".equals(method.getName())) {
+                if (Boolean.TRUE.equals(result)) {
                     StatsCenter.getInstance().increasePermit(resourceId, end - start);
-                } else if ("tryAcquire".equals(method.getName())) {
-                    if (Boolean.TRUE.equals(result)) {
-                        StatsCenter.getInstance().increasePermit(resourceId, end - start);
-                    }
-                } else if ("release".equals(method.getName())) {
-                    StatsCenter.getInstance().decreasePermit(resourceId);
+                } else {
+                    StatsCenter.getInstance().increaseFailPermit(resourceId);
                 }
-                return result;
+            } else if ("release".equals(method.getName())) {
+                StatsCenter.getInstance().decreasePermit(resourceId);
             }
+            return result;
         });
 
     }
