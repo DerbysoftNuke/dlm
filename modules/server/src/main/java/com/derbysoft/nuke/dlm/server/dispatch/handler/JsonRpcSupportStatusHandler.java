@@ -21,11 +21,7 @@ import java.util.Map;
  */
 @Component
 @RequestMapping(uri = "/status.rpc")
-public class JsonRpcSupportStatusHandler extends TemplateSupport implements IHandler {
-
-    public JsonRpcSupportStatusHandler(ITemplateEngine templateEngine) {
-        super(templateEngine);
-    }
+public class JsonRpcSupportStatusHandler implements IHandler {
 
     @Override
     public String execute(String uri, HttpMethod method, String request) {
@@ -76,8 +72,8 @@ public class JsonRpcSupportStatusHandler extends TemplateSupport implements IHan
             StatsCenter.PermitStats permitStats = entry.getValue();
             each.put("resource", key);
             each.put("permitName", permitStats.getPermit());
-            each.put("acquireDuration", ImmutableMap.of("max", permitStats.getDuration().getMax(), "min", permitStats.getDuration().getMin(), "avg", permitStats.getDuration().getAvg()));
-            each.put("permits", ImmutableMap.of("peakTimestamp", permitStats.getPeak().getCount() + "/" + permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
+            each.put("acquireDuration", ImmutableMap.of("max", permitStats.getDuration().getMax() == null ? 0 : permitStats.getDuration().getMax(), "min", permitStats.getDuration().getMin() == null ? 0 : permitStats.getDuration().getMin(), "avg", permitStats.getDuration().getAvg()));
+            each.put("permits", ImmutableMap.of("peakTimestamp", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount()  + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
             each.put("lastAcquireTimestamp", permitStats.getLastTimestamp());
             permitStatuses.add(each);
         }
