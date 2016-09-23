@@ -31,7 +31,7 @@ class AbstractTcpPermitClient {
 
     private Logger log = LoggerFactory.getLogger(AbstractTcpPermitClient.class);
 
-    protected EventLoopGroup group = new NioEventLoopGroup();
+    protected EventLoopGroup group;
     protected Channel channel;
     protected Bootstrap bootstrap;
 
@@ -44,6 +44,7 @@ class AbstractTcpPermitClient {
         this.host = host;
         this.port = port;
 
+        group = new NioEventLoopGroup();
         bootstrap = new Bootstrap();
         bootstrap.group(group)
                 .channel(NioSocketChannel.class)
@@ -101,6 +102,7 @@ class AbstractTcpPermitClient {
     protected AbstractTcpPermitClient(Channel channel, EventLoopGroup group, Bootstrap bootstrap) {
         this.channel = channel;
         this.group = group;
+        this.bootstrap = bootstrap;
     }
 
     private void doConnectIfNecessary(boolean async) {

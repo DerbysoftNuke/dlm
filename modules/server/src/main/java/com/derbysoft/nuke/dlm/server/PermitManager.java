@@ -31,9 +31,8 @@ public class PermitManager implements IPermitManager {
     public PermitManager(IPermitRepository repository) {
         this.repository = repository;
         for (Map.Entry<String, IPermit> each : repository.getAll().entrySet()) {
-            log.info("Recovering permit {} with spec {} by id {}", each.getValue().name(), each.getValue().spec(), each.getKey());
-            IPermit permit = buildPermit(each.getValue().name(), new PermitSpec(each.getValue().spec()));
-            StatsCenter.getInstance().register(each.getKey(), permit);
+            log.info("Recovering permit {} by id {}", each.getValue(), each.getKey());
+            StatsCenter.getInstance().register(each.getKey(), each.getValue());
         }
     }
 
@@ -55,7 +54,7 @@ public class PermitManager implements IPermitManager {
         log.debug("Update permit {} with spec {} by id {}", permitName, spec, resourceId);
 
         IPermit permit = buildPermit(permitName, spec);
-        StatsCenter.getInstance().register(resourceId, permit);
+        StatsCenter.getInstance().update(resourceId, permit);
         repository.put(resourceId, permit);
         return true;
     }
@@ -78,12 +77,14 @@ public class PermitManager implements IPermitManager {
         return (IPermit) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{IPermit.class}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                long start = System.currentTimeMillis();
                 Object result = method.invoke(permit, args);
+                long end = System.currentTimeMillis();
                 if ("acquire".equals(method.getName())) {
-                    StatsCenter.getInstance().increasePermit(resourceId);
+                    StatsCenter.getInstance().increasePermit(resourceId, end - start);
                 } else if ("tryAcquire".equals(method.getName())) {
                     if (Boolean.TRUE.equals(result)) {
-                        StatsCenter.getInstance().increasePermit(resourceId);
+                        StatsCenter.getInstance().increasePermit(resourceId, end - start);
                     }
                 } else if ("release".equals(method.getName())) {
                     StatsCenter.getInstance().decreasePermit(resourceId);

@@ -51,6 +51,11 @@ public class StatsCenter {
 
     public Stats register(String resourceId, IPermit permit) {
         PermitStats permitStats = this.permitStats.putIfAbsent(resourceId, new PermitStats(permit));
+        return this.permitStats.get(resourceId);
+    }
+
+    public Stats update(String resourceId, IPermit permit) {
+        PermitStats permitStats = this.permitStats.putIfAbsent(resourceId, new PermitStats(permit));
         if (permitStats != null) {
             permitStats.setPermit(permit);
         }
@@ -68,13 +73,14 @@ public class StatsCenter {
      * @param resourceId
      * @return
      */
-    public StatsCenter increasePermit(String resourceId) {
+    public StatsCenter increasePermit(String resourceId, long duration) {
         PermitStats permitStats = this.permitStats.get(resourceId);
         if (permitStats == null) {
             return this;
         }
 
         permitStats.increase();
+        permitStats.getDuration().record(duration);
         return this;
     }
 
@@ -129,6 +135,7 @@ public class StatsCenter {
     public static class PermitStats extends Stats {
 
         private IPermit permit;
+        private final Duration duration = new Duration();
 
         public PermitStats(IPermit permit) {
             this.permit = permit;
@@ -140,6 +147,46 @@ public class StatsCenter {
 
         public void setPermit(IPermit permit) {
             this.permit = permit;
+        }
+
+        public Duration getDuration() {
+            return duration;
+        }
+    }
+
+    public static class Duration {
+
+        private Long max;
+        private Long min;
+        private long avg = 0L;
+        private AtomicLong total = new AtomicLong(0);
+
+        public Duration record(long duration) {
+            if (max == null || duration > max) {
+                max = duration;
+            }
+            if (min == null || duration < min) {
+                min = duration;
+            }
+            long t = total.incrementAndGet();
+            avg = (avg * (t - 1) + duration) / t;
+            return this;
+        }
+
+        public Long getMax() {
+            return max;
+        }
+
+        public Long getMin() {
+            return min;
+        }
+
+        public long getAvg() {
+            return avg;
+        }
+
+        public long getTotal() {
+            return total.get();
         }
     }
 
@@ -215,7 +262,7 @@ public class StatsCenter {
 
         public Peak() {
             count = new AtomicLong(0);
-            timestamp = new AtomicReference(ZonedDateTime.now());
+            timestamp = new AtomicReference(null);
         }
 
         public AtomicLong getCount() {

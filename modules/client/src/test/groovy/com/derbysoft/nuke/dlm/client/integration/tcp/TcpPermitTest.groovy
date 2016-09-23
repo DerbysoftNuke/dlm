@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class TcpPermitTest {
 
     def TcpPermitManager manager;
-    def resourceId = "123";
+    def resourceId = "TokenBucketPermit_1";
 
     @Before
     def void startup() {
@@ -29,9 +29,7 @@ class TcpPermitTest {
 
     @Test
     def void register() {
-        println manager.register(resourceId, "LeakyBucketPermit", new PermitSpec("permitsPerSecond=1000"))
-        println manager.register(resourceId, "LeakyBucketPermit", new PermitSpec("permitsPerSecond=100"))
-        println manager.register(resourceId, "LeakyBucketPermit", new PermitSpec("permitsPerSecond=100"))
+        println manager.register(resourceId, "SemaphorePermit", new PermitSpec("total=1"))
     }
 
     @Test
@@ -67,13 +65,14 @@ class TcpPermitTest {
     @Test
     def void performance() {
         def tasks = [];
-        def total = 10000;
+        def total = 5;
         AtomicInteger a = new AtomicInteger(total);
         (1..total).each {
             tasks.add({
-                def permit = manager.getPermit(resourceId)
+                def permit = null;
                 try {
-                    println("acquiring...")
+                    permit = manager.getPermit(resourceId);
+                    println("acquiring...");
                     permit.acquire();
                 } catch (Throwable t) {
                     t.printStackTrace();
@@ -84,12 +83,12 @@ class TcpPermitTest {
             });
         }
 
-        def pool = Executors.newFixedThreadPool(20);
         def start = System.currentTimeMillis();
+        def pool = Executors.newFixedThreadPool(20);
         pool.invokeAll(tasks);
+        pool.shutdown();
         def end = System.currentTimeMillis();
         println((end - start) + " ms: " + total * 1000f / (end - start) + " tps");
-        pool.shutdown();
     }
 
 }

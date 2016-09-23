@@ -8,6 +8,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 
+import java.sql.Time;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,7 +25,8 @@ public class TcpPermit extends AbstractTcpPermitClient implements IPermit {
 
     @Override
     public void acquire() {
-        execute(new AcquireRequest(resourceId));
+        while (!tryAcquire(30, TimeUnit.SECONDS)) {
+        }
     }
 
     @Override
