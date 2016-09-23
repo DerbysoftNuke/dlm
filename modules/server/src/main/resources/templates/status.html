@@ -46,7 +46,7 @@
         <tr>
             <th rowspan="2">Resource</th>
             <th rowspan="2">Permit Name</th>
-            <th colspan="3">Acquire Duration(ms)</th>
+            <th colspan="3">Acquire Duration</th>
             <th colspan="4">Permits</th>
             <th rowspan="2">Last Acquire Timestamp</th>
         </tr>
@@ -62,10 +62,10 @@
         <tr th:each="permitStatsEntry : ${permitStats}">
             <td th:text="${permitStatsEntry.key}">...</td>
             <td th:text="${permitStatsEntry.value.permit}">...</td>
-            <td th:text="${permitStatsEntry.value.duration.max}">...</td>
-            <td th:text="${permitStatsEntry.value.duration.min}">...</td>
-            <td th:text="${permitStatsEntry.value.duration.avg}">...</td>
-            <td th:text="${permitStatsEntry.value.peak.count + ' / '+permitStatsEntry.value.peak.timestamp}">...</td>
+            <td><span th:text="${permitStatsEntry.value.duration.max + ' ms'}" th:if="${permitStatsEntry.value.duration.max != null}">...</span></td>
+            <td><span th:text="${permitStatsEntry.value.duration.min + ' ms'}" th:if="${permitStatsEntry.value.duration.min != null}">...</span></td>
+            <td><span th:text="${permitStatsEntry.value.duration.avg + ' ms'}" th:if="${permitStatsEntry.value.duration.avg != null}">...</span></td>
+            <td><span th:text="${permitStatsEntry.value.peak.count + ' / '+permitStatsEntry.value.peak.timestamp}" th:if="${permitStatsEntry.value.peak.timestamp.get() != null}">...</span></td>
             <td th:text="${permitStatsEntry.value.actives}">...</td>
             <td th:text="${permitStatsEntry.value.duration.total}">...</td>
             <td th:text="${permitStatsEntry.value.failedPermits}">...</td>
