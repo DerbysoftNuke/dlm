@@ -3,6 +3,7 @@ package com.derbysoft.nuke.dlm.server.dispatch.handler.rpc;
 import com.alibaba.fastjson.JSON;
 import com.derbysoft.nuke.dlm.server.dispatch.IHandler;
 import com.derbysoft.nuke.dlm.server.dispatch.RequestMapping;
+import com.derbysoft.nuke.dlm.server.dispatch.handler.JsonRpcSupportHandler;
 import com.derbysoft.nuke.dlm.server.status.StatsCenter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -19,17 +20,17 @@ import java.util.Map;
 /**
  * Created by DT219 on 2016-09-23.
  */
-@Component
+@Component("status.rpc")
 @RequestMapping(uri = "/status.rpc")
-public class Status implements IHandler {
+public class Status extends JsonRpcSupportHandler {
 
     @Override
-    public String execute(String uri, HttpMethod method, String request) {
+    public Object doExecute(String method, List params) {
         Map<String, Object> trafficStatus = getTrafficStatus(ImmutableMap.of("HTTP", StatsCenter.getInstance().getHttpStats(), "TCP", StatsCenter.getInstance().getTcpStats()));
         Map<String, Object> result = new HashMap<>();
         result.put("permitStats", getPermitStatuses());
         result.put("trafficStatus", trafficStatus);
-        return JSON.toJSONString(result);
+        return result;
     }
 
     private Map<String, Object> getTrafficStatus(Map<String, StatsCenter.TrafficStats> traffics) {
