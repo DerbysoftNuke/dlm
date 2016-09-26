@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,40 +25,42 @@ public class JsonRpcSupportStatusHandler implements IHandler {
 
     @Override
     public String execute(String uri, HttpMethod method, String request) {
-        Map<String,Object> map = getTrafficStatus(ImmutableMap.of("HTTP", StatsCenter.getInstance().getHttpStats(), "TCP", StatsCenter.getInstance().getTcpStats()));
-        map.put("permitStats",getPermitStatuses());
-        return JSON.toJSONString(map);
+        Map<String, Object> trafficStatus = getTrafficStatus(ImmutableMap.of("HTTP", StatsCenter.getInstance().getHttpStats(), "TCP", StatsCenter.getInstance().getTcpStats()));
+        Map<String, Object> result = new HashMap<>();
+        result.put("permitStats", getPermitStatuses());
+        result.put("trafficStatus", trafficStatus);
+        return JSON.toJSONString(result);
     }
 
-    private Map<String,Object> getTrafficStatus(Map<String, StatsCenter.TrafficStats> traffics){
-        if(CollectionUtils.isEmpty(traffics.values())){
+    private Map<String, Object> getTrafficStatus(Map<String, StatsCenter.TrafficStats> traffics) {
+        if (CollectionUtils.isEmpty(traffics.values())) {
             return Maps.newHashMap();
         }
-        Map<String,Object> map = Maps.newHashMap();
-        List<Map<String,Object>> trafficStatuses = Lists.newArrayList();
-        for(Map.Entry<String,StatsCenter.TrafficStats> entry : traffics.entrySet()){
+        Map<String, Object> map = Maps.newHashMap();
+        for (Map.Entry<String, StatsCenter.TrafficStats> entry : traffics.entrySet()) {
+            String type = entry.getKey();
             StatsCenter.TrafficStats stats = entry.getValue();
-            Map<String,Object> trafficStatus = Maps.newHashMap();
-            trafficStatus.put("peakConnections", stats.getTraffic().getPeak().getCount());
-            trafficStatus.put("peakTimestamp",stats.getTraffic().getPeak().getTimestamp());
-            trafficStatus.put("currentActiveConnections",stats.getTraffic().getActives());
-            trafficStatus.put("lastAccessTimestamp",stats.getTraffic().getLastTimestamp());
+            Map<String, Object> trafficSttus = Maps.newHashMap();
+            trafficSttus.put("peakConnections", stats.getTraffic().getPeak().getCount());
+            trafficSttus.put("peakTimestamp", stats.getTraffic().getPeak().getTimestamp());
+            trafficSttus.put("currentActiveConnections", stats.getTraffic().getActives());
+            trafficSttus.put("lastAccessTimestamp", stats.getTraffic().getLastTimestamp());
 
-            List<Map<String,Object>> activeConnectionses = Lists.newArrayList();
+            List<Map<String, Object>> activeConnectionses = Lists.newArrayList();
             for (Channel channel : stats.getChannels()) {
-                Map<String,Object> each = Maps.newHashMap();
-                each.put("id",channel.id().toString());
-                each.put("remoteAddress",channel.remoteAddress().toString());
-                each.put("localAddress",channel.localAddress().toString());
-                each.put("active",channel.isActive());
-                each.put("open",channel.isOpen());
-                each.put("connectTimeout",channel.config().getConnectTimeoutMillis());
+                Map<String, Object> each = Maps.newHashMap();
+                each.put("id", channel.id().toString());
+                each.put("remoteAddress", channel.remoteAddress().toString());
+                each.put("localAddress", channel.localAddress().toString());
+                each.put("active", channel.isActive());
+                each.put("open", channel.isOpen());
+                each.put("connectTimeout", channel.config().getConnectTimeoutMillis());
                 activeConnectionses.add(each);
             }
-            trafficStatus.put("activeConnections",activeConnectionses);
-            trafficStatuses.add(trafficStatus);
+            trafficSttus.put("activeConnections", activeConnectionses);
+            map.put(type, trafficSttus);
+
         }
-        map.put("trafficStatuses",trafficStatuses);
         return map;
     }
 
@@ -73,12 +76,10 @@ public class JsonRpcSupportStatusHandler implements IHandler {
             each.put("resource", key.toString());
             each.put("permitName", permitStats.getPermit() == null ? "" : permitStats.getPermit().toString());
             each.put("acquireDuration", ImmutableMap.of("max", permitStats.getDuration().getMax() == null ? 0 : permitStats.getDuration().getMax(), "min", permitStats.getDuration().getMin() == null ? 0 : permitStats.getDuration().getMin(), "avg", permitStats.getDuration().getAvg()));
-            each.put("permits", ImmutableMap.of("peakTimestamp", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount()  + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
+            each.put("permits", ImmutableMap.of("peakTimestamp", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount() + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
             each.put("lastAcquireTimestamp", permitStats.getLastTimestamp());
             permitStatuses.add(each);
         }
         return permitStatuses;
     }
-
-
 }
