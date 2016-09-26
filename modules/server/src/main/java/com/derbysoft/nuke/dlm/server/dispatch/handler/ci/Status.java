@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by DT219 on 2016-09-22.
  */
-@Component
+@Component("status.ci")
 @RequestMapping(uri = "/status.ci", contentType = "text/json")
 public class Status extends JsonRpcSupportHandler {
 

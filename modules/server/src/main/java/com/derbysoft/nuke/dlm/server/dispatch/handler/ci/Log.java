@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Created by DT219 on 2016-09-22.
  */
-@Component
+@Component("log.ci")
 @RequestMapping(uri = "/log.ci", contentType = "text/json")
 public class Log extends JsonRpcSupportHandler {
 

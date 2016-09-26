@@ -32,7 +32,10 @@ public abstract class JsonRpcSupportHandler implements IHandler {
             response.put("result", result);
         } catch (Exception e) {
             log.error("Invoke json rpc failed by uri " + uri + ", and request " + text, e);
-            response.put("error", e.toString());
+            Map error = new HashMap();
+            error.put("type", e.getClass().getName());
+            error.put("message", e.toString());
+            response.put("error", error);
         }
         return JSON.toJSONString(response);
     }

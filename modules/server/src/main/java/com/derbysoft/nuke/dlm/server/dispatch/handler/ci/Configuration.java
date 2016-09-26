@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by passyt on 16-9-22.
  */
-@Component
+@Component("configuration.ci")
 @RequestMapping(uri = "/configuration.ci", contentType = "text/json")
 public class Configuration extends JsonRpcSupportHandler {
 
