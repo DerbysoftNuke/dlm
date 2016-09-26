@@ -1,8 +1,9 @@
-package com.derbysoft.nuke.dlm.server.dispatch.handler;
+package com.derbysoft.nuke.dlm.server.dispatch.handler.ci;
 
 import com.derby.nuke.common.module.file.IFileService;
 import com.derby.nuke.common.module.rpc.log.LogService;
 import com.derbysoft.nuke.dlm.server.dispatch.RequestMapping;
+import com.derbysoft.nuke.dlm.server.dispatch.handler.JsonRpcSupportHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,13 +14,13 @@ import java.util.List;
  */
 @Component
 @RequestMapping(uri = "/log.ci", contentType = "text/json")
-public class LogRpc extends JsonRpcSupportHandler {
+public class Log extends JsonRpcSupportHandler {
 
     private final LogService logService;
     private final IFileService fileService;
 
     @Autowired
-    public LogRpc(LogService logService, IFileService fileService) {
+    public Log(LogService logService, IFileService fileService) {
         this.logService = logService;
         this.fileService = fileService;
     }

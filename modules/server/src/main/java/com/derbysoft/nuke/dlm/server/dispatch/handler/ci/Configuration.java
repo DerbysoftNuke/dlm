@@ -1,7 +1,8 @@
-package com.derbysoft.nuke.dlm.server.dispatch.handler;
+package com.derbysoft.nuke.dlm.server.dispatch.handler.ci;
 
 import com.derbysoft.nuke.dlm.server.config.DefaultConfigurer;
 import com.derbysoft.nuke.dlm.server.dispatch.RequestMapping;
+import com.derbysoft.nuke.dlm.server.dispatch.handler.JsonRpcSupportHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,7 @@ import java.util.List;
  */
 @Component
 @RequestMapping(uri = "/configuration.ci", contentType = "text/json")
-public class ConfigurationRpc extends JsonRpcSupportHandler {
+public class Configuration extends JsonRpcSupportHandler {
 
     @Autowired
     private DefaultConfigurer configurer;

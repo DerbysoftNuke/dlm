@@ -22,17 +22,17 @@ public class PermitBuilderManager {
         return INSTANCE;
     }
 
-    public void registerPermitBuilder(IPermitBuilder builder, String... resourceNames) {
-        for (String resourceName : resourceNames) {
-            if (builders.putIfAbsent(resourceName, builder) != null) {
-                log.warn("Existing permit builder by name {} and ignore to register", resourceName);
+    public void registerPermitBuilder(IPermitBuilder builder, String... permitNames) {
+        for (String permitName : permitNames) {
+            if (builders.putIfAbsent(permitName, builder) != null) {
+                log.warn("Existing permit builder by name {} and ignore to register", permitName);
                 return;
             }
         }
     }
 
-    public IPermit buildPermit(String resourceName, PermitSpec spec) {
-        IPermitBuilder builder = builders.get(resourceName);
+    public IPermit buildPermit(String permitName, PermitSpec spec) {
+        IPermitBuilder builder = builders.get(permitName);
         if (builder == null) {
             return null;
         }

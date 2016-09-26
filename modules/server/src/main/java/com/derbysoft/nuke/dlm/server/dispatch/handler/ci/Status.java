@@ -1,7 +1,8 @@
-package com.derbysoft.nuke.dlm.server.dispatch.handler;
+package com.derbysoft.nuke.dlm.server.dispatch.handler.ci;
 
 import com.derby.nuke.common.module.rpc.status.StatusCenter;
 import com.derbysoft.nuke.dlm.server.dispatch.RequestMapping;
+import com.derbysoft.nuke.dlm.server.dispatch.handler.JsonRpcSupportHandler;
 import com.google.common.collect.Sets;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,7 @@ import java.util.List;
  */
 @Component
 @RequestMapping(uri = "/status.ci", contentType = "text/json")
-public class StatusRpc extends JsonRpcSupportHandler {
+public class Status extends JsonRpcSupportHandler {
 
     @Override
     public Object doExecute(String method, List params) {

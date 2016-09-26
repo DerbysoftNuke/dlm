@@ -1,4 +1,4 @@
-package com.derbysoft.nuke.dlm.server.dispatch.handler;
+package com.derbysoft.nuke.dlm.server.dispatch.handler.rpc;
 
 import com.alibaba.fastjson.JSON;
 import com.derbysoft.nuke.dlm.server.dispatch.IHandler;
@@ -20,7 +20,7 @@ import java.util.Map;
  */
 @Component
 @RequestMapping(uri = "/status.rpc")
-public class JsonRpcSupportStatusHandler implements IHandler {
+public class Status implements IHandler {
 
     @Override
     public String execute(String uri, HttpMethod method, String request) {

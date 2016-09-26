@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class HttpPermitTest {
 
     def HttpPermitManager manager;
-    def resourceId = "M21AK47";
+    def resourceId = "http://www.baidu.com/";
 
     @Before
     public void init() {
@@ -65,8 +65,9 @@ class HttpPermitTest {
         AtomicInteger a = new AtomicInteger(total);
         (1..total).each {
             tasks.add({
-                def permit = manager.getPermit(resourceId)
+                def permit = null;
                 try {
+                    permit = manager.getPermit(resourceId);
                     println("acquiring...")
                     permit.acquire();
                 } catch (Throwable t) {
