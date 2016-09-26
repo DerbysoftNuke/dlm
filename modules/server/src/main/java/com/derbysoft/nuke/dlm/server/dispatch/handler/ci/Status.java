@@ -26,7 +26,7 @@ public class Status extends JsonRpcSupportHandler {
         } else if ("statusWithout".equals(method)) {
             return StatusCenter.get().statusWithout(Sets.newHashSet((List) params.get(0)));
         }
-        return new UnsupportedOperationException(method + " is not supported");
+        throw new UnsupportedOperationException(method + " is not supported");
     }
 
 }

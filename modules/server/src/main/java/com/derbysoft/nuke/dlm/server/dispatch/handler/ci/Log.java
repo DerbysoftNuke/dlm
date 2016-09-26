@@ -52,7 +52,7 @@ public class Log extends JsonRpcSupportHandler {
         } else if ("listFiles".equals(method)) {
             return fileService.listFiles((String) params.get(0));
         }
-        return new UnsupportedOperationException(method + " is not supported");
+        throw new UnsupportedOperationException(method + " is not supported");
     }
 
 }

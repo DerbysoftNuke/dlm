@@ -28,7 +28,7 @@ public class Configuration extends JsonRpcSupportHandler {
             return configurer.setProperty((String) params.get(0), (String) params.get(1));
         }
 
-        return new UnsupportedOperationException(method + " is not supported");
+        throw new UnsupportedOperationException(method + " is not supported");
     }
 
 }
