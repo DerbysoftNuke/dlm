@@ -77,7 +77,7 @@ public class Status extends JsonRpcSupportHandler {
             each.put("resource", key.toString());
             each.put("permitName", permitStats.getPermit() == null ? "" : permitStats.getPermit().toString());
             each.put("acquireDuration", ImmutableMap.of("max", permitStats.getDuration().getMax() == null ? 0 : permitStats.getDuration().getMax(), "min", permitStats.getDuration().getMin() == null ? 0 : permitStats.getDuration().getMin(), "avg", permitStats.getDuration().getAvg()));
-            each.put("permits", ImmutableMap.of("peakTimestamp", permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount() + "/" + permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp(), "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
+            each.put("permits", ImmutableMap.of("peakTimestamp", (permitStats.getPeak().getCount() == null ? "" : permitStats.getPeak().getCount()) + "/" + (permitStats.getPeak().getTimestamp() == null ? "" : permitStats.getPeak().getTimestamp()) , "current", permitStats.getActives(), "successes", permitStats.getDuration().getTotal(), "fails", permitStats.getFailedPermits()));
             each.put("lastAcquireTimestamp", permitStats.getLastTimestamp());
             permitStatuses.add(each);
         }
