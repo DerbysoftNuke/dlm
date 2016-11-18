@@ -59,7 +59,9 @@
             <id>Linux</id>
             <activation>
                 <os>
-                    <family>!Windows</family>
+                    <family>unix</family>
+                    <name>Linux</name>
+                    <arch>amd64</arch>
                 </os>
             </activation>
             <build>
@@ -70,6 +72,34 @@
                         <version>0.6.3</version>
                         <configuration>
                             <protocCommand>${basedir}/../../tools/protobuf/linux-x86_64/bin/protoc</protocCommand>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>Mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>x86_64</arch>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.igor-petruk.protobuf</groupId>
+                        <artifactId>protobuf-maven-plugin</artifactId>
+                        <version>0.6.3</version>
+                        <configuration>
+                            <protocCommand>${basedir}/../../tools/protobuf/osx-x86_64/bin/protoc</protocCommand>
                         </configuration>
                         <executions>
                             <execution>
