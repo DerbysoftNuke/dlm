@@ -96,7 +96,7 @@ class AbstractTcpPermitClient {
                     }
 
                 });
-        doConnectIfNecessary(false);
+//        doConnectIfNecessary(false);
     }
 
     protected AbstractTcpPermitClient(Channel channel, EventLoopGroup group, Bootstrap bootstrap) {
