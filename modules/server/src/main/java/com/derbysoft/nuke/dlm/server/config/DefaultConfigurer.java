@@ -41,6 +41,7 @@ public class DefaultConfigurer extends PropertySourcesPlaceholderConfigurer {
             setLocations(new ClassPathResource("application.properties"), configResource);
             setOrder(1);
             setIgnoreUnresolvablePlaceholders(true);
+            setLocalOverride(true);
         }
     }
 
