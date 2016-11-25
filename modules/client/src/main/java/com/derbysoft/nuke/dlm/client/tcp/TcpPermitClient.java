@@ -52,6 +52,10 @@ class TcpPermitClient {
         }
 
         synchronized (group) {
+            if (channel != null && channel.isActive()) {
+                return;
+            }
+
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(group)
                     .channel(NioSocketChannel.class)
