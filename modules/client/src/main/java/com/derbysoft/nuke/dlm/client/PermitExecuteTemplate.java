@@ -27,8 +27,12 @@ public class PermitExecuteTemplate {
      * @return
      */
     public <T> T executeWith(String resourceKey, Callable<T> callable) {
-        IPermit permit = getRequiredPermit(resourceKey);
+        IPermit permit = getPermit(resourceKey);
         try {
+            if (permit == null) {
+                return callable.call();
+            }
+
             permit.acquire();
             return callable.call();
         } catch (RuntimeException e) {
@@ -36,7 +40,7 @@ public class PermitExecuteTemplate {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            permit.release();
+            release(permit);
         }
     }
 
@@ -49,8 +53,12 @@ public class PermitExecuteTemplate {
      * @return null if no permit granted within the given timeout
      */
     public <T> T executeWithTry(String resourceKey, long timeout, TimeUnit unit, Callable<T> callable) {
-        IPermit permit = getRequiredPermit(resourceKey);
+        IPermit permit = getPermit(resourceKey);
         try {
+            if (permit == null) {
+                return callable.call();
+            }
+
             if (permit.tryAcquire(timeout, unit)) {
                 return callable.call();
             } else {
@@ -61,7 +69,7 @@ public class PermitExecuteTemplate {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            permit.release();
+            release(permit);
         }
     }
 
@@ -72,8 +80,12 @@ public class PermitExecuteTemplate {
      * @return null if no permit granted immediately
      */
     public <T> T executeWithTry(String resourceKey, Callable<T> callable) {
-        IPermit permit = getRequiredPermit(resourceKey);
+        IPermit permit = getPermit(resourceKey);
         try {
+            if (permit == null) {
+                return callable.call();
+            }
+
             if (permit.tryAcquire()) {
                 return callable.call();
             } else {
@@ -84,17 +96,29 @@ public class PermitExecuteTemplate {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            permit.release();
+            release(permit);
         }
     }
 
-    protected IPermit getRequiredPermit(String resourceKey) {
+    protected IPermit getPermit(String resourceKey) {
+        if (manager == null) {
+            return null;
+        }
+
         IPermit permit = manager.getPermit(resourceKey);
         if (permit == null) {
             throw new PermitNotFoundException(resourceKey);
         }
 
         return permit;
+    }
+
+    protected void release(IPermit permit) {
+        if (permit == null) {
+            return;
+        }
+
+        permit.release();
     }
 
 }
