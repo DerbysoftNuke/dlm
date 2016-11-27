@@ -14,13 +14,13 @@ import java.util.List;
  */
 @Component("log.ci")
 @RequestMapping(uri = "/log.ci", contentType = "text/json")
-public class Log extends JsonRpcSupportHandler {
+public class LogCi extends JsonRpcSupportHandler {
 
     private final LogService logService;
     private final IFileService fileService;
 
     @Autowired
-    public Log(LogService logService, IFileService fileService) {
+    public LogCi(LogService logService, IFileService fileService) {
         this.logService = logService;
         this.fileService = fileService;
     }

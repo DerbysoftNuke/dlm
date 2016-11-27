@@ -54,6 +54,10 @@ public class StatsCenter {
         return this.permitStats.get(resourceId);
     }
 
+    public Stats unregister(String resourceId) {
+        return this.permitStats.remove(resourceId);
+    }
+
     public Stats update(String resourceId, IPermit permit) {
         PermitStats permitStats = this.permitStats.putIfAbsent(resourceId, new PermitStats(permit));
         if (permitStats != null) {
@@ -140,7 +144,7 @@ public class StatsCenter {
     }
 
     /**
-     * Permit Stats
+     * PermitRpc Stats
      */
     public static class PermitStats extends Stats {
 
@@ -230,6 +234,10 @@ public class StatsCenter {
         }
 
         public Stats decrease() {
+            if (actives.get() <= 0) {
+                return this;
+            }
+
             actives.decrementAndGet();
             return this;
         }

@@ -4,6 +4,7 @@ import com.derbysoft.nuke.dlm.IPermit;
 import com.derbysoft.nuke.dlm.IPermitManager;
 import com.derbysoft.nuke.dlm.PermitBuilderManager;
 import com.derbysoft.nuke.dlm.PermitSpec;
+import com.derbysoft.nuke.dlm.exception.PermitNotFoundException;
 import com.derbysoft.nuke.dlm.server.repository.IPermitRepository;
 import com.derbysoft.nuke.dlm.server.status.StatsCenter;
 import com.google.common.collect.ImmutableMap;
@@ -50,16 +51,20 @@ public class PermitManager implements IPermitManager {
 
     public boolean update(String resourceId, String permitName, PermitSpec spec) {
         log.debug("Update permit {} with spec {} by id {}", permitName, spec, resourceId);
+        if (!repository.contains(resourceId)) {
+            throw new PermitNotFoundException(resourceId);
+        }
 
         IPermit permit = buildPermit(permitName, spec);
-        StatsCenter.getInstance().update(resourceId, permit);
         repository.put(resourceId, permit);
+        StatsCenter.getInstance().update(resourceId, permit);
         return true;
     }
 
     @Override
     public boolean unregister(String resourceId) {
         repository.remove(resourceId);
+        StatsCenter.getInstance().unregister(resourceId);
         return true;
     }
 

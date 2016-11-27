@@ -18,8 +18,8 @@ import java.util.Map;
  * Created by DT219 on 2016-09-23.
  */
 @Component("status.rpc")
-@RequestMapping(uri = "/status.rpc")
-public class Status extends JsonRpcSupportHandler {
+@RequestMapping(uri = "/status.rpc", contentType = "text/json")
+public class StatusRpc extends JsonRpcSupportHandler {
 
     @Override
     public Object doExecute(String method, List params) {

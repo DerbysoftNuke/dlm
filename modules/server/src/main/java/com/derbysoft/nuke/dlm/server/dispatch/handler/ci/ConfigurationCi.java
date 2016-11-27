@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Component("configuration.ci")
 @RequestMapping(uri = "/configuration.ci", contentType = "text/json")
-public class Configuration extends JsonRpcSupportHandler {
+public class ConfigurationCi extends JsonRpcSupportHandler {
 
     @Autowired
     private DefaultConfigurer configurer;

@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Component("status.ci")
 @RequestMapping(uri = "/status.ci", contentType = "text/json")
-public class Status extends JsonRpcSupportHandler {
+public class StatusCi extends JsonRpcSupportHandler {
 
     @Override
     public Object doExecute(String method, List params) {
