@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by passyt on 16-9-2.
@@ -75,26 +75,7 @@ public class PermitManager implements IPermitManager {
 
     @Override
     public IPermit getPermit(String resourceId) {
-        IPermit permit = repository.get(resourceId);
-        //TODO optimize performance
-        return (IPermit) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{IPermit.class}, (proxy, method, args) -> {
-            long start = System.currentTimeMillis();
-            Object result = method.invoke(permit, args);
-            long end = System.currentTimeMillis();
-            if ("acquire".equals(method.getName())) {
-                StatsCenter.getInstance().increasePermit(resourceId, end - start);
-            } else if ("tryAcquire".equals(method.getName())) {
-                if (Boolean.TRUE.equals(result)) {
-                    StatsCenter.getInstance().increasePermit(resourceId, end - start);
-                } else {
-                    StatsCenter.getInstance().increaseFailPermit(resourceId);
-                }
-            } else if ("release".equals(method.getName())) {
-                StatsCenter.getInstance().decreasePermit(resourceId);
-            }
-            return result;
-        });
-
+        return new StatsPermit(repository.get(resourceId), resourceId);
     }
 
     public Map<String, IPermit> permits() {
@@ -108,6 +89,66 @@ public class PermitManager implements IPermitManager {
         }
 
         return permit;
+    }
+
+    private static class StatsPermit implements IPermit {
+
+        private final IPermit original;
+        private final String resourceId;
+
+        private StatsPermit(IPermit original, String resourceId) {
+            this.original = original;
+            this.resourceId = resourceId;
+        }
+
+        @Override
+        public void acquire() {
+            long start = System.currentTimeMillis();
+            original.acquire();
+            long end = System.currentTimeMillis();
+            StatsCenter.getInstance().increasePermit(resourceId, end - start);
+        }
+
+        @Override
+        public boolean tryAcquire() {
+            long start = System.currentTimeMillis();
+            boolean result = original.tryAcquire();
+            long end = System.currentTimeMillis();
+
+            if (Boolean.TRUE.equals(result)) {
+                StatsCenter.getInstance().increasePermit(resourceId, end - start);
+            } else {
+                StatsCenter.getInstance().increaseFailPermit(resourceId);
+            }
+
+            return result;
+        }
+
+        @Override
+        public boolean tryAcquire(long timeout, TimeUnit unit) {
+            long start = System.currentTimeMillis();
+            boolean result = original.tryAcquire(timeout, unit);
+            long end = System.currentTimeMillis();
+
+            if (Boolean.TRUE.equals(result)) {
+                StatsCenter.getInstance().increasePermit(resourceId, end - start);
+            } else {
+                StatsCenter.getInstance().increaseFailPermit(resourceId);
+            }
+
+            return result;
+        }
+
+        @Override
+        public void release() {
+            original.release();
+            StatsCenter.getInstance().decreasePermit(resourceId);
+        }
+
+        @Override
+        public String toString() {
+            return original.toString() + "@" + resourceId;
+        }
     }
 
 }
