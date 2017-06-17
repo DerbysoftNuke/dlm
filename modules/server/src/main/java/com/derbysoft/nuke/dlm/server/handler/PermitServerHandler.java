@@ -5,10 +5,7 @@ import com.derbysoft.nuke.dlm.model.*;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerAdapter;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.AttributeKey;
@@ -53,7 +50,15 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
             IPermitResponse response = null;
             boolean granted = false;
             try {
-                response = permitService.execute(request);
+                if (request instanceof ReleaseRequest && !acquiredResourceIds.containsKey(ctx.channel())) {
+                    //connection is down
+                    response = request.newResponse();
+                    response.setResourceId(request.getResourceId());
+                    response.setHeader(request.getHeader());
+                } else {
+                    response = permitService.execute(request);
+                }
+
                 if (response instanceof AcquireResponse) {
                     granted = true;
                     log.debug("release permit from {} on resource", ctx.channel().remoteAddress().toString(), request.getResourceId());
@@ -76,13 +81,16 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
                 response.setHeader(request.getHeader());
                 response.setErrorMessage(writer.toString());
             }
-            streamLog.info("Return response >>| {} to {}", response, ctx.channel().remoteAddress().toString());
+
             boolean finalGranted = granted;
+            IPermitResponse finalResponse = response;
             ctx.writeAndFlush(response).addListener(future -> {
                 try {
                     future.get();
+                    streamLog.info("Return response >>| {} to {}", finalResponse, ctx.channel().remoteAddress().toString());
                 } catch (Exception e) {
                     if (e.getCause() instanceof ClosedChannelException && finalGranted) {
+                        log.warn("release permit from {} with resource {} as connection is down", ((ChannelFuture) future).channel(), request.getResourceId());
                         permitService.execute(new ReleaseRequest(request.getResourceId()));
                     } else {
                         log.error("Unexpected exception", e.getCause());
@@ -101,7 +109,7 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
         }
 
         //release all permits if socket is broken for TCP
-        log.warn("releasing {} permit from {} as it's disconnected", acquiredResourceIds.get(ctx.channel()).size(), ctx.channel().remoteAddress().toString());
+        log.warn("releasing {} permit from {} as it's disconnected", acquiredResourceIds.get(ctx.channel()).size(), ctx.channel());
         for (String resourceId : acquiredResourceIds.get(ctx.channel())) {
             log.debug("release permit from {} on resource", ctx.channel().remoteAddress().toString(), resourceId);
             permitService.execute(new ReleaseRequest(resourceId));
