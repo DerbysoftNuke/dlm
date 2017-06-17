@@ -5,6 +5,8 @@ import com.derbysoft.nuke.dlm.server.codec.ProtoBuf2PermitRequestDecoder;
 import com.derbysoft.nuke.dlm.server.handler.PermitServerHandler;
 import com.derbysoft.nuke.dlm.server.status.StatsCenter;
 import com.derbysoft.nuke.dlm.server.status.TrafficMonitorHandler;
+import io.netty.channel.ChannelHandlerAdapter;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
@@ -13,6 +15,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.AttributeKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +39,7 @@ public class PermitServerTcpInitializer extends PermitServerInitializer {
     protected void beforeInitChannel(SocketChannel socketChannel) throws Exception {
         socketChannel.pipeline()
                 .addLast("logger", new LoggingHandler(LogLevel.DEBUG))
+                .addLast("tcpAttribute", new TcpRegisterHandler())
                 .addLast("monitorHandler", new TrafficMonitorHandler(StatsCenter.getInstance().getTcpStats()))
                 .addLast("idleStateHandler", new IdleStateHandler(0, 0, 180))
                 .addLast("frameDecoder", new ProtobufVarint32FrameDecoder())
@@ -49,6 +53,15 @@ public class PermitServerTcpInitializer extends PermitServerInitializer {
 
     @Override
     protected void afterInitChannel(SocketChannel socketChannel) throws Exception {
+    }
+
+    private static class TcpRegisterHandler extends ChannelHandlerAdapter {
+
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            super.channelActive(ctx);
+            ctx.attr(AttributeKey.valueOf(TYPE_TCP));
+        }
     }
 
 }

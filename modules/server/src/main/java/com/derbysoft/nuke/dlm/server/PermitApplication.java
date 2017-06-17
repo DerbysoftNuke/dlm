@@ -13,7 +13,6 @@ public class PermitApplication {
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(PermitApplication.class, args);
-
     }
 
 }
