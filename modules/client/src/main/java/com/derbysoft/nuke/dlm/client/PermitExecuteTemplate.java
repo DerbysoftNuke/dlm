@@ -28,19 +28,21 @@ public class PermitExecuteTemplate {
      */
     public <T> T executeWith(String resourceKey, Callable<T> callable) {
         IPermit permit = getPermit(resourceKey);
+        boolean granted = false;
         try {
             if (permit == null) {
                 return callable.call();
             }
 
             permit.acquire();
+            granted = true;
             return callable.call();
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            release(permit);
+            release(permit, granted);
         }
     }
 
@@ -54,12 +56,14 @@ public class PermitExecuteTemplate {
      */
     public <T> T executeWithTry(String resourceKey, long timeout, TimeUnit unit, Callable<T> callable) {
         IPermit permit = getPermit(resourceKey);
+        boolean granted = false;
         try {
             if (permit == null) {
                 return callable.call();
             }
 
-            if (permit.tryAcquire(timeout, unit)) {
+            granted = permit.tryAcquire(timeout, unit);
+            if (granted) {
                 return callable.call();
             } else {
                 return null;
@@ -69,7 +73,7 @@ public class PermitExecuteTemplate {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            release(permit);
+            release(permit, granted);
         }
     }
 
@@ -81,12 +85,14 @@ public class PermitExecuteTemplate {
      */
     public <T> T executeWithTry(String resourceKey, Callable<T> callable) {
         IPermit permit = getPermit(resourceKey);
+        boolean granted = false;
         try {
             if (permit == null) {
                 return callable.call();
             }
 
-            if (permit.tryAcquire()) {
+            granted = permit.tryAcquire();
+            if (granted) {
                 return callable.call();
             } else {
                 return null;
@@ -96,7 +102,7 @@ public class PermitExecuteTemplate {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            release(permit);
+            release(permit, granted);
         }
     }
 
@@ -113,8 +119,8 @@ public class PermitExecuteTemplate {
         return permit;
     }
 
-    protected void release(IPermit permit) {
-        if (permit == null) {
+    protected void release(IPermit permit, boolean granted) {
+        if (permit == null || !granted) {
             return;
         }
 
