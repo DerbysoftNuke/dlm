@@ -15,6 +15,7 @@ import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.status.InfoStatus;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.StatusPrinter;
+import com.derby.nuke.common.module.log.LogMessageFilter;
 import com.derbysoft.nuke.dlm.server.config.PropertiesUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.PropertyResolver;
@@ -22,10 +23,7 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.PropertySourcesPropertyResolver;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class LogbackInitializing {
 
@@ -52,10 +50,6 @@ public class LogbackInitializing {
                 } catch (JoranException ignored) {
                 }
                 StatusPrinter.printInCaseOfErrorsOrWarnings(loggerContext);
-                return;
-            }
-
-            if (!resolver.containsProperty("log.file.path")) {
                 return;
             }
 
@@ -106,6 +100,7 @@ public class LogbackInitializing {
             for (String key : PropertiesUtils.getKeys(properties, LOGGER_PROPERTY_PREFIX)) {
                 setLogger(resolver, key, loggerContext);
             }
+            StatusPrinter.printInCaseOfErrorsOrWarnings(loggerContext);
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -118,12 +113,8 @@ public class LogbackInitializing {
             consoleAppender.setEncoder(createPatternEncoder(resolver, loggerContext, null));
 
             appender = consoleAppender;
-        } else if (name.startsWith("file")) {
-            if (resolver.containsProperty("log." + name + ".path")) {
-                appender = createFileAppender(name, resolver, loggerContext);
-            } else {
-                appender = createFileAppender("file", resolver, loggerContext);
-            }
+        } else if (name.startsWith("file") && resolver.containsProperty("log." + name + ".path")) {
+            appender = createFileAppender(name, resolver, loggerContext);
         }
 
         if (appender == null) {
@@ -133,6 +124,9 @@ public class LogbackInitializing {
         appender.setName(name);
         appender.setContext(loggerContext);
         appender.start();
+        LogMessageFilter logMessageFilter = new LogMessageFilter();
+        logMessageFilter.setContext(loggerContext);
+        appender.addFilter(logMessageFilter);
         return appender;
     }
 
@@ -210,4 +204,14 @@ public class LogbackInitializing {
             loggerContext.getLogger(loggerName).setLevel(null);
         }
     }
+
+    public void destroy() {
+        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        final Iterator<Appender<ILoggingEvent>> appenderIterator = lc.getLogger(Logger.ROOT_LOGGER_NAME).iteratorForAppenders();
+        while (appenderIterator.hasNext()) {
+            Appender<ILoggingEvent> appender = appenderIterator.next();
+            appender.stop();
+        }
+    }
+
 }

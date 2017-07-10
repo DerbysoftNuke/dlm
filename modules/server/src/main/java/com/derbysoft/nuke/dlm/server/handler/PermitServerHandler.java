@@ -2,9 +2,9 @@ package com.derbysoft.nuke.dlm.server.handler;
 
 import com.derbysoft.nuke.dlm.IPermitService;
 import com.derbysoft.nuke.dlm.model.*;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -19,6 +19,7 @@ import java.io.StringWriter;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.derbysoft.nuke.dlm.model.Protobuf.Response.ResponseType.PING_RESPONSE;
 import static com.derbysoft.nuke.dlm.server.initializer.PermitServerInitializer.TYPE_TCP;
@@ -34,7 +35,19 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
     private static Logger log = LoggerFactory.getLogger(PermitServerHandler.class);
     private IPermitService permitService;
     private Executor executor = Executors.newCachedThreadPool();
-    private final ListMultimap<Channel, String> acquiredResourceIds = Multimaps.synchronizedListMultimap(LinkedListMultimap.create());
+    private final LoadingCache<Channel, LoadingCache<String, AtomicLong>> acquiredResourceIds = CacheBuilder.newBuilder().build(new CacheLoader<Channel, LoadingCache<String, AtomicLong>>() {
+
+        @Override
+        public LoadingCache<String, AtomicLong> load(Channel key) throws Exception {
+            return CacheBuilder.newBuilder().build(new CacheLoader<String, AtomicLong>() {
+                @Override
+                public AtomicLong load(String resourceId) throws Exception {
+                    return new AtomicLong(0);
+                }
+            });
+        }
+
+    });
 
     @Autowired
     public PermitServerHandler(IPermitService permitService) {
@@ -50,7 +63,7 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
             IPermitResponse response = null;
             boolean granted = false;
             try {
-                if (request instanceof ReleaseRequest && !acquiredResourceIds.containsKey(ctx.channel())) {
+                if (request instanceof ReleaseRequest && (acquiredResourceIds.getIfPresent(ctx.channel()) == null || acquiredResourceIds.getIfPresent(ctx.channel()).getIfPresent(request.getResourceId()) == null)) {
                     //connection is down
                     response = request.newResponse();
                     response.setResourceId(request.getResourceId());
@@ -62,14 +75,14 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
                 if (response instanceof AcquireResponse) {
                     granted = true;
                     log.debug("release permit from {} on resource", ctx.channel().remoteAddress().toString(), request.getResourceId());
-                    acquiredResourceIds.put(ctx.channel(), request.getResourceId());
+                    acquiredResourceIds.get(ctx.channel()).get(request.getResourceId()).incrementAndGet();
                 } else if (response instanceof TryAcquireResponse) {
                     if (((TryAcquireResponse) response).isSuccessful()) {
                         granted = true;
-                        acquiredResourceIds.put(ctx.channel(), request.getResourceId());
+                        acquiredResourceIds.get(ctx.channel()).get(request.getResourceId()).incrementAndGet();
                     }
                 } else if (response instanceof ReleaseRequest) {
-                    acquiredResourceIds.remove(ctx.channel(), request.getResourceId());
+                    acquiredResourceIds.get(ctx.channel()).get(request.getResourceId()).decrementAndGet();
                 }
             } catch (Exception e) {
                 StringWriter writer = new StringWriter();
@@ -109,12 +122,18 @@ public class PermitServerHandler extends ChannelHandlerAdapter {
         }
 
         //release all permits if socket is broken for TCP
-        log.warn("releasing {} permit from {} as it's disconnected", acquiredResourceIds.get(ctx.channel()).size(), ctx.channel());
-        for (String resourceId : acquiredResourceIds.get(ctx.channel())) {
-            log.debug("release permit from {} on resource", ctx.channel().remoteAddress().toString(), resourceId);
-            permitService.execute(new ReleaseRequest(resourceId));
+        LoadingCache<String, AtomicLong> als = acquiredResourceIds.getIfPresent(ctx.channel());
+        if (als != null) {
+            for (String resourceId : als.asMap().keySet()) {
+                long total = als.getIfPresent(resourceId).get();
+                log.warn("releasing {} permits from {} on resource {} as it's disconnected", total, ctx.channel(), resourceId);
+                for (int i = 0; i < total; i++) {
+                    log.debug("release permit from {} on resource {}", ctx.channel().remoteAddress().toString(), resourceId);
+                    permitService.execute(new ReleaseRequest(resourceId));
+                }
+            }
         }
-        acquiredResourceIds.removeAll(ctx.channel());
+        acquiredResourceIds.invalidate(ctx.channel());
     }
 
     @Override
